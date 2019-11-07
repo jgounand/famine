@@ -44,11 +44,21 @@ Logique:
 
 		NEED SEGMENT with READ permission
 
-		-other code
+		- changer la signature
+		- si un path n est pas set verifier le dossier ou je me trouve si il y a des binaires pouvant etre infecte (no infected)
+		- verifier de meme pour le PATH dans l'ENV
+		- verifier si il existe des dossiers dans le repertoire
+					:Si oui executer une copie du virus pour chaque dossier et set un path
+
+		un pre_payload      NEED EXEC permission
+		payload             NEED READ permission
+
+		- rechercher un GAP pour le pre_payload with correct permission
+		- rechercher un GAP pour le payload with correct permission
+					: si non ajouter les permissions
 
 
 
-		- Checker si il y a un process lldb, valgrind, si oui on stop le programme
 		- Ouvrir tous les path possible
 
 
