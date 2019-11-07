@@ -44,7 +44,7 @@ Logique:
 
 		NEED SEGMENT with READ permission
 
-		- changer la signature
+		- si lance via le binaire changer la signature
 		- si un path n est pas set verifier le dossier ou je me trouve si il y a des binaires pouvant etre infecte (no infected)
 		- verifier de meme pour le PATH dans l'ENV
 		- verifier si il existe des dossiers dans le repertoire
