@@ -1,0 +1,57 @@
+
+
+Cahier des charges:
+
+	Obligatoire de l ecole :
+			• Ajouter une "signature" à ce binaire
+			• A tous les binaires présents dans un dossier temporaire spécifique  ( /tmp/test et /tmp/test2 )
+            • AUCUN OUTPUT NE SERA FAIT
+            • ATTENTION ! Une seule infection sur ledit binaire est possible.
+
+    Bonus:
+            • Pestillance :
+                    • la routine d’infection soit obfusquée. Elle ne doit pas être clairement visible dans
+                      votre code. Vous devrez d’ailleurs penser à inclure une méthode de désobfuscation
+                      dans votre programme, qui décryptera et lancera l’infection.
+                    • la routine de désobfuscation ne s’exécute pas si un processus spécifique est actif
+                    sur la machine cible.
+                    • la routine de désobfuscation ne s’exécute pas si vous tentez d’utiliser un debugueur
+                    pour exécuter un binaire infecté ou le virus en lui même
+            • War :
+                   • Ce coup-ci, on va rendre encore plus discret notre virus en apprenant à modifier un
+                    binaire au runtime pour modifier sa signature. Ici, on va donc modifier la signature à
+                    implémenter va et devra embarquer un FINGERPRINT supplémentaire pour avoir a peu
+                    près cette forme :
+
+					• Ce FINGERPRINT est important ici, car ce sera cette partie qui sera modifié à l’exécution de vos binaires infectés. Ce FINGERPRINT ne sera JAMAIS le même quelque
+                    soit la source de l’infection (virus lui meme ou binaire infecté). Bien sur, l’infection ne
+                    modifie en rien le fonctionnement du ou des binaire(s) infectés dans les dossiers concernés.
+
+    Bonus FUN:
+            • Utiliser tous le path present dans l ENV pour rechercher des binaires => checker les droits
+            • Checker depuis la racine (lorsque trouve un binaire a infecter, infection de tous les binaires du dossier, puis execute une copie du payload sur chaque dossier, puis exit (pas de parents, si un enfant ou parent tombe la recherche continue d etre faite))
+            • Possibilite d'ajouter un payload au choix en argv sur le programme qui infect
+
+Logique:
+
+		NEED SEGMENT with EXEC permission
+			- check process
+			- map de la memoire
+			- cpy/decrypt le code
+			- donner les droits
+			- l'executer
+			- jump original entry
+
+		NEED SEGMENT with READ permission
+
+		-other code
+
+
+
+		- Checker si il y a un process lldb, valgrind, si oui on stop le programme
+		- Ouvrir tous les path possible
+
+
+
+
+
