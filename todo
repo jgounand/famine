@@ -58,10 +58,29 @@ Logique:
 					: si non ajouter les permissions
 
 
-
 		- Ouvrir tous les path possible
 
 
 
+pre_payload:
+		function_01: checker process
+			parametre: AUCUN
+			return boolean 0 == good / 1 == exit
+		function_02: map memoire
+			parametre: 1 size
+			return 2 valeurs PTR + SIZE_MAPED
+		function_03: decrpy/cpy
+			parametres: 4 :src,size,dest,key
+fork ? avec un env different function_04: mprotect / and call
+			parametres: 2 :dest,size_dest
+			return
+		jump to original
+
+
+payload:        need magic number to know if I'm binnary or juste a deamon_payload
+parametre: pre_payload, pre_payload_size, payload, payload_size, magic number
+		checker_magic number
+			function_11: changement signature
+		function_12: checker tous les fichiers/dossiers
 
 
