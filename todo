@@ -61,7 +61,6 @@ Logique:
 		- Ouvrir tous les path possible
 
 
-
 pre_payload:
 		function_01: checker process
 			parametre: AUCUN
@@ -70,7 +69,7 @@ pre_payload:
 			parametre: 1 size
 			return 2 valeurs PTR + SIZE_MAPED
 		function_03: decrpy/cpy
-			parametres: 4 :src,size,dest,key
+			parametres: 6 :payload_src + x,size,key,src_virus, size_virus,dest_virus
 fork ? avec un env different function_04: mprotect / and call
 			parametres: 2 :dest,size_dest
 			return
@@ -82,5 +81,11 @@ parametre: pre_payload, pre_payload_size, payload, payload_size, magic number
 		checker_magic number
 			function_11: changement signature
 		function_12: checker tous les fichiers/dossiers
+
+
+		quand un fichier est trouve:
+			- rechercher un GAP pour le pre_payload with correct permission
+            - rechercher un GAP pour le payload with correct permission
+            					: si non ajouter les permissions
 
 
