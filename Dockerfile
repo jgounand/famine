@@ -10,3 +10,4 @@ RUN echo "source ~/peda/peda.py" >> ~/.gdbinit
 RUN apt install -y binutils
 RUN apt install -y make
 RUN apt install -y gcc
+RUN apt install -y man
