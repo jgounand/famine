@@ -7,5 +7,6 @@
 int main(void)
 {
 	process_runing();
+	decrypt(0,2,0,0,0);
 	return (0);
 }

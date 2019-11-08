@@ -16,5 +16,6 @@
 # include <inttypes.h>
 
 bool process_runing(void);
+int decrypt(void *src_virus,size_t s_virus, void *src_pre,size_t s_pre, int key);
 
 #endif //FAMINE_FAMINE_H
