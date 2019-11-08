@@ -11,8 +11,9 @@
 # include <string.h>
 # include <sys/types.h>
 # include <dirent.h>
-#include <inttypes.h>
+# include <sys/mman.h>
 
+# include <inttypes.h>
 
 bool process_runing(void);
 

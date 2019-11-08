@@ -10,7 +10,6 @@ bool process_runing(void)
 	struct dirent* ent;
 	char* endptr;
 	char buf[256];
-	const char name[] = "cat";
 
 	if (!(dir = opendir("/proc"))) {
 		perror("can't open /proc");
@@ -33,7 +32,7 @@ bool process_runing(void)
 				/* check the first token in the file, the program name */
 				char* first = strtok(buf, " ");
 				printf("name %s\n",first);
-				if (!strcmp(first, name)) {
+				if (!strcmp(first, "gdb")) {
 					fclose(fp);
 					closedir(dir);
 					return (1);

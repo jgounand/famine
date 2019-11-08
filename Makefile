@@ -13,7 +13,7 @@ OBJ_DIR_NAME =	obj
 
 OBJ_DIR =		./obj/
 
-FILENAMES =	famine process
+FILENAMES =	famine process decrypt
 
 OBJ_PATHS :=	$(addsuffix .o,$(FILENAMES))
 OBJ_PATHS :=	$(addprefix $(OBJ_DIR),$(OBJ_PATHS))
