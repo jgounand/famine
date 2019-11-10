@@ -71,6 +71,29 @@ int get_env_var(char *name, char *content, int content_size)
 	return (content[0] != '\0');
 }
 
+int open_directory(const char *path)
+{
+	char path_file[256];
+	DIR* rep = NULL;
+	struct dirent* dirent;
+	printf("%s :",path);
+	if ((rep = opendir(path)) == NULL)
+		return 1;
+	while((dirent = readdir(rep)))
+	{
+		size_t len;
+		len = ft_strlen(path);
+		memmove(path_file,path,len);
+		path_file[len] = '/';
+		memmove(path_file + len + 1,dirent->d_name, ft_strlen(dirent->d_name));
+		path_file[len + 1 + ft_strlen(dirent->d_name)] = '\0';
+
+		printf("%s %s\n",dirent->d_name,path_file);
+	}
+	return (0);
+}
+
+
 int infect(char path[],size_t path_length)
 {
 	size_t i = 0;
@@ -80,18 +103,18 @@ int infect(char path[],size_t path_length)
 		if(path[i] == ':')
 		{
 			path[i] = '\0';
-			//call get_dir with the - leng_word
-			printf("1 path %s\n",&path[i] - length_path);
-			length_path = -1;
+			open_directory(&path[i] - length_path);
+			//write(1,&path[i] - length_path, length_path);
+			//write(1,"\n",1);
 			path[i] = ':';
-
+			length_path = -1;
 		}
 		else if (path[i] == '\0')
 			break ;
 		i++;
 		length_path++;
 	}
-	whilev(i < path_length);
+	while(i < path_length);
 	return 0;
 }
 
