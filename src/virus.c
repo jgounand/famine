@@ -88,10 +88,14 @@ int     open_map(char *fname, t_file *file)
 int do_the_job(t_file *file)
 {
 	if (file->size < sizeof(Elf64_Ehdr))
-		return (EXIT_FAILURE);
-
+		return (1);
+	if (strncmp(file->data, ELFMAG,SELFMAG))
+		return 1;
+	write(1,"2\n",2);
+	if (file->data[EI_CLASS] != ELFCLASS64)
+		return 1;
+	printf("valid binary");
 	return 0;
-
 }
 
 int open_directory(const char *path)
@@ -114,7 +118,8 @@ int open_directory(const char *path)
 		//printf("%s %s\n",dirent->d_name,path_file);
 		if (open_map(path_file,&file) == 0)
 		{
-			do_the_job(&file);
+			if (do_the_job(&file) == 0)
+				printf("valid binary %s %s\n",dirent->d_name,path_file);
 			close(file.fd);
 			munmap(file.data, file.size);
 		}
