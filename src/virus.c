@@ -84,18 +84,23 @@ int     open_map(char *fname, t_file *file)
 	return 0;
 }
 
-t_cave get_gap(t_file *file)
+int out_of_range(t_file *file, void * ptr)
+{
+	if (ptr < (void *)file->data || ptr > (void *)file->data + file->size)
+		return (EXIT_FAILURE);
+	return (EXIT_SUCCESS);
+}
+
+t_cave *get_gap(t_file *file, t_cave *cave)
 {
 	size_t payload = 355; // a changer selon la taille
-	t_code_cave_elf64       *cave;
 	Elf64_Ehdr*             elf_hdr;
 	Elf64_Phdr*             seg;
 	int                     i;
 
 	elf_hdr = (Elf64_Ehdr *) file->data;
 	seg = (Elf64_Phdr *)((unsigned char*) elf_hdr + (unsigned int)elf_hdr->e_phoff);
-	cave = (t_code_cave_elf64 *)malloc(sizeof(t_code_cave_elf64));
-	ft_bzero(cave, sizeof(t_code_cave_elf64));
+	bzero(cave, sizeof(t_cave));
 	file->error = 1;
 	i = 0;
 	while (i < elf_hdr->e_phnum)
@@ -112,8 +117,8 @@ t_cave get_gap(t_file *file)
 			if (i + 1 < elf_hdr->e_phnum && seg->p_type == PT_LOAD && ((seg->p_offset - cave->start_gap) > payload))
 			{
 				file->error = 0;
-				cave->start_seg->p_memsz += PAY_EIF64_SIZE;
-				cave->start_seg->p_filesz += PAY_EIF64_SIZE;
+				cave->start_seg->p_memsz += payload;
+				cave->start_seg->p_filesz += payload;
 			}
 		}
 		else
@@ -132,7 +137,7 @@ int do_the_job(t_file *file)
 		return 1;
 	if (file->data[EI_CLASS] != ELFCLASS64)
 		return 1;
-	cave = get_gap(file);
+	get_gap(file,&cave);
 	if (file->error)
 		return 1;
 	return 0;
