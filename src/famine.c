@@ -4,10 +4,21 @@
 
 #include "../inc/famine.h"
 
+bool anti_debug_check(void)
+{
+	if (ptrace(PTRACE_TRACEME , 0, 0, 0) < 0)
+	{
+		kill(getpid(), -9);
+		return (1);
+	}
+	return (0);
+}
+
 int main(void)
 {
 	pid_t pid;
-	if (process_runing())
+
+	if (anti_debug_check() && process_runing())
 		exit(1);
 	pid = fork();
 	if (pid == 0) //children
