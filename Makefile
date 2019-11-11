@@ -2,7 +2,7 @@ NAME =			famine
 
 CC =			gcc
 
-FLAGS =			-Wall -Werror -Wextra
+FLAGS =			-Wall -Werror -Wextra -nostdlib
 
 HEADERS =		-I ./inc
 

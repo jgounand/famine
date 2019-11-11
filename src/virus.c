@@ -91,9 +91,8 @@ int out_of_range(t_file *file, void * ptr)
 	return (EXIT_SUCCESS);
 }
 
-t_cave *get_gap(t_file *file, t_cave *cave)
+t_cave *get_gap(t_file *file, t_cave *cave, size_t payload)
 {
-	size_t payload = 355; // a changer selon la taille
 	Elf64_Ehdr*             elf_hdr;
 	Elf64_Phdr*             seg;
 	int                     i;
@@ -130,16 +129,21 @@ t_cave *get_gap(t_file *file, t_cave *cave)
 
 int do_the_job(t_file *file)
 {
-	t_cave cave;
+	t_cave cave1,cave2;
 	if (file->size < sizeof(Elf64_Ehdr))
 		return (1);
 	if (strncmp(file->data, ELFMAG,SELFMAG))
 		return 1;
 	if (file->data[EI_CLASS] != ELFCLASS64)
 		return 1;
-	get_gap(file,&cave);
+	get_gap(file,&cave1, 125);
+	get_gap(file,&cave2,512);
 	if (file->error)
+	{
+		printf("error get gap\n");
 		return 1;
+	}
+	//copier les deux payload
 	return 0;
 }
 
