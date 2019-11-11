@@ -70,6 +70,7 @@ int get_env_var(char *name, char *content, int content_size)
 		close(fd);
 	return (content[0] != '\0');
 }
+
 int     open_map(char *fname, t_file *file)
 {
 	struct stat stat;
