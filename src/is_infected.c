@@ -1,6 +1,6 @@
 #include "../inc/famine.h"
 
-char	*ft_strstr(const char *haystack, size_t n)
+static char	*ft_find_str(const char *haystack, size_t n)
 {
 	unsigned int	i;
 	unsigned int	j;
@@ -30,7 +30,7 @@ bool    is_infected(char *path_file, t_file *file)
 {
     if(!open_map(path_file, file))
         return ((file->error = 1) - 1);
-    if(ft_strstr(file->data, file->size))
+    if(ft_find_str(file->data, file->size))
         return(1);
     return(0);
 }
