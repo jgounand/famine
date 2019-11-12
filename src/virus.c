@@ -3,6 +3,18 @@
 //
 #include "../inc/famine.h"
 
+
+# define __syscall0(type,name)          \
+type name(void)                         \
+{                                       \
+	long __res;                         \
+	__asm__ volatile(   "int $0x80"     \
+						: "=a" (__res)  \
+						: "0"(____NR_##name));\
+	return (type)__res;\
+}
+
+
 int magic = 0;
 char env[1024];
 		// 1 => changement signature
@@ -224,3 +236,4 @@ int virus(void)
 	printf("content: %s\n",path);
 	return (0);
 }
+
