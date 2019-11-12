@@ -8,6 +8,7 @@ static char	*ft_find_str(const char *haystack, size_t n)
     const char needle[] = SIGN;
 
 	i = 0;
+    write(1,&needle[0],14); 
 	if (!needle[0])
 		return ((char *)haystack);
 	while (n--)
@@ -28,7 +29,7 @@ static char	*ft_find_str(const char *haystack, size_t n)
 
 bool    is_infected(char *path_file, t_file *file)
 {
-    if(!open_map(path_file, file))
+    if(open_map(path_file, file))
         return ((file->error = 1) - 1);
     if(ft_find_str(file->data, file->size))
         return(1);
