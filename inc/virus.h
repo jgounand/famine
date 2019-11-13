@@ -22,8 +22,8 @@
 #include <dirent.h>
 #include <sys/mman.h>
 
+#define PAGE_SIZE 4096
 
-#include <string.h> // DELETE strstr
 
 typedef struct	s_file
 {

