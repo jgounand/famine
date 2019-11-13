@@ -43,5 +43,7 @@ typedef struct	s_cave
 }				t_cave;
 
 int     open_map(char *fname, t_file *file);
+bool    is_infected(char *path_file, t_file *file);
+
 
 #endif //FAMINE_FAMINE_H
