@@ -284,22 +284,27 @@ int open_directory(const char *path)
 	t_file file;
 	int i = 0;
 	struct linux_dirent64 *d;
-	char *host;
 	size_t len;
 
 	printf("directory: '%s'\n",path);
 
 	dd = open (path, 0x10000,0);
 	if (dd < 0)
+	{
+		printf("open fail: '%s'\n",path);
+
 		return 1;
+
+	}
+	printf("getdents64\n");
 	nread = getdents64(dd, buf, 128);
+	printf("nread %d\n",nread);
 	while (i < nread)
 	{
 		d = (struct linux_dirent64 *) (buf + i);
 		i += d->d_reclen ;
-		host = d->d_name;
-		printf("host %s type %d\n",host, d->d_type);
-		if (host[0] == '.')
+		printf("host %s type %d\n",d->d_name, d->d_type);
+		if (d->d_name[0] == '.')
 			continue;
 		len = ft_strlen(path);
 		ft_memmove(path_file,path,len);
