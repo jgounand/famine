@@ -23,7 +23,7 @@
 #include <sys/mman.h>
 
 
-
+#include <string.h> // DELETE strstr
 
 typedef struct	s_file
 {
@@ -34,8 +34,8 @@ typedef struct	s_file
 }				t_file;
 
 struct linux_dirent64 {
-	ino64_t        d_ino;    /* 64-bit inode number */
-	off64_t        d_off;    /* 64-bit offset to next structure */
+	long long        d_ino;    /* 64-bit inode number */
+	unsigned long long        d_off;    /* 64-bit offset to next structure */
 	unsigned short d_reclen; /* Size of this dirent */
 	unsigned char  d_type;   /* File type */
 	char           d_name[]; /* Filename (null-terminated) */

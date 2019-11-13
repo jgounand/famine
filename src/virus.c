@@ -248,7 +248,7 @@ int open_directory(const char *path)
 int open_directory_2(const char *path)
 {
 	int dd,nread;
-	char buf[256];
+	char buf[128];
 	int i = 0;
 	struct linux_dirent64 *d;
 	char *host;
@@ -260,21 +260,21 @@ if (path)
 	dd = open (".\0", 0x10000,0);
 	if (dd < 0)
 		return 1;
-	nread = getdents64(dd, buf, 256);
+	nread = getdents64(dd, buf, 128);
 	while (i < nread)
 	{
-		write(1,buf,nread);
 		d = (struct linux_dirent64 *) (buf + i);
 		i += d->d_reclen ;
 		host = d->d_name;
-		printf("host %s type %d\n",host - 5, d->d_type);
-		return 1;
+		printf("host %s type %d\n",host, d->d_type);
 		if (host[0] == '.')
 			continue;
-		printf("d->dname %s\n",d->d_name);
 
 	}
-printf("fin open_dir2\n");
+	exit(4);
+
+	printf("fin open_dir2\n");
+	exit(4);
 	return 0;
 }
 

