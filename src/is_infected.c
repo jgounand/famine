@@ -62,7 +62,7 @@ void	put_sig(char *data)
 	int i;
 
 	i = 0;
-	*(long long *)fingerprint = *(long long *)get_eip() - SIZE_BEFORE_ENTRY_POINT + 54;
+	*(long long *)fingerprint = *(long long *)address_of_main - SIZE_BEFORE_ENTRY_POINT + 54;
 
 	while(sig[i])
 	{
@@ -72,8 +72,8 @@ void	put_sig(char *data)
 	i = 7;
 	while(i >= 0)
 	{
-		if(fingerprint[i] == 9)
-			fingerprint[i] = 0;
+		if(fingerprint[i] == '9')
+			fingerprint[i] = '0';
 		else
 			fingerprint[i]++;
 		i--;

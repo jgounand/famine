@@ -28,3 +28,21 @@ int decrypt(void *start,size_t size, int key)
 		return 0;
 }
 
+void decrypter(void)
+{
+	size_t	size;
+	size_t	offset;
+	char	*start;
+
+	if(size)
+	{
+		start[offset] ^= ;
+		offset++;
+		size++;
+		while (offset < size)
+		{
+			start[offset] ^= start[offset - 1];
+			offset++;
+		}
+	}
+}
