@@ -44,8 +44,8 @@ bool	is_infected(t_file *file)
 
 	i = 0;
 	header = (Elf64_Ehdr *)file->data;
-	header->e_entry - 8; // fingerprint
-	header->e_entry - 62; // start signature
+	// header->e_entry - 8; // fingerprint
+	// header->e_entry - 62; // start signature
 	while(sig[i])
 	{
 		if (sig[i] !=  *(header->e_entry - SIZE_BEFORE_ENTRY_POINT + i))
