@@ -22,7 +22,7 @@
 # include <elf.h>
 
 # include <inttypes.h>
-# define SIGN "Famine version 1.0 (c)oded by <jgounand>-<afiodier>"
+# define SIZE_BEFORE_ENTRY_POINT 62
 
 bool process_runing(void);
 int decrypt(void *src_virus,size_t s_virus, void *src_pre,size_t s_pre, int key);
