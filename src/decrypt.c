@@ -4,30 +4,26 @@
 
 #include "../inc/famine.h"
 
-int decrypt(void *src_virus,size_t s_virus, void *src_pre,size_t s_pre, int key)
+int decrypt(void *start,size_t size, int key)
 {
 	void *dst;
 	typedef long (*JittedFunc)(int);
 
-	if (src_virus || s_virus || src_pre || s_pre || key)
+	if (start || size || key)
 	{;}
-	dst = mmap(0, s_virus, PROT_READ|PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS,-1,0);
-	if (dst == (void*)-1) {
-		//perror("mmap");
-		return -1;
-	}
-	//decrypt and cpy
-	unsigned char code[] = {
-			0xC3                                // ret
-	};
-	memcpy(dst, code, sizeof(code));
 
-	if (mprotect(dst, s_virus, PROT_READ | PROT_EXEC) == -1) {
+	if (mprotect(start, size, PROT_WRITE | PROT_READ) == -1) {
 		//perror("mprotect");
 		return -1;
 	}
+	//memcpy(dst, code, sizeof(code));
+
+	if (mprotect(start, size, PROT_READ | PROT_EXEC) == -1) {
+		perror("mprotect");
+		return -1;
+	}
 	JittedFunc func = dst;
-func(0);
+	func(0);
 		//printf("test Jitted %d\n",(int)func(0));
 		return 0;
 }

@@ -2,7 +2,7 @@ NAME =			famine
 
 CC =			gcc
 
-FLAGS =			 -nostdlib -m32 -Wall -Wextra
+FLAGS =			 -nostdlib -m32 -Wall -Wextra -N
 
 HEADERS =		-I ./inc
 
@@ -13,7 +13,7 @@ OBJ_DIR_NAME =	obj
 
 OBJ_DIR =		./obj/
 
-FILENAMES =	famine process decrypt virus is_infected
+FILENAMES =	famine
 
 OBJ_PATHS :=	$(addsuffix .o,$(FILENAMES))
 OBJ_PATHS :=	$(addprefix $(OBJ_DIR),$(OBJ_PATHS))
