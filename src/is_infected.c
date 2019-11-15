@@ -62,7 +62,7 @@ void	put_sig(char *data)
 	int i;
 
 	i = 0;
-	*(long long *)fingerprint = *(long long *)get_eip();
+	*(long long *)fingerprint = *(long long *)get_eip() - SIZE_BEFORE_ENTRY_POINT + 54;
 
 	while(sig[i])
 	{
