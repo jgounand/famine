@@ -665,10 +665,8 @@ static void new_file(char buf[],size_t size, size_t end_of_text,char *path)
 	//printf("tmp %s, path %s\n",tmp, path);
 	close(fd);
 
-	char argv[] = "mv /tmp/toto/.cat /tmp/toto/cat";
-	//system(argv);
-	unlink("/tmp/toto/cat");
-	int ret = rename (tmp, "/tmp/toto/cat");
+	unlink(path);
+	int ret = rename (tmp, path);
 	ft_putstr("fin rename ");
 	ft_putnbr(ret);
 	ft_putchar('\n');
