@@ -44,7 +44,10 @@ static  void	ft_putnbr(int nb);
 static void		ft_putstr(char *s);
 static int		ft_putchar(int c);
 static int     ft_isdigit(int c);
+static int ft_isallnum(char *str);
+
 static char            *ft_strnstr(char *s1, char *s2, size_t n);
+static int             ft_strcmp(const char *s1, const char *s2);
 
 #define PAGE_SIZE 4096
 
@@ -303,7 +306,7 @@ static int open_directory(char *path)
 		return 1;
 
 	}
-	ft_putstr("getdents64");
+	ft_putstr("getdents64\n");
 	//printf("getdents64\n");
 	nread = getdents64(dd, buf, 128);
 	write(1,"nread :",7);
@@ -411,13 +414,17 @@ static int             ft_strncmp(const char *s1, const char *s2, size_t n)
 static bool process_runing(void)
 {
 
-	int fd,i;
-	char buf[124];
+	int fd,i,dd, nread;
+	char buf[256]; // = sizeof(struct dirent)
 	char *TracerPid;
+	char *Name;
+	struct linux_dirent64 *d;
+	char path[64];
 
+	ft_putnbr(sizeof(struct linux_dirent64));
 	fd = open ("/proc/self/status", 0,0);
 	ft_putstr("open /proc/self/status\n");
-	while((i =read(fd,buf,1024)) > 0)
+	while((i =read(fd,buf,256)) > 0)
 	{
 		if ((TracerPid = ft_strnstr(buf,"TracerPid:",i)) != 0)
 		{
@@ -428,36 +435,55 @@ static bool process_runing(void)
 				exit(1);
 		}
 
-	}
-	exit (4);
 
-//	while((ent = readdir(dir)) != NULL) {
-//		*//* if endptr is not a null character, the directory is not
-//		 * entirely numeric, so ignore it *//*
-//		long lpid = strtol(ent->d_name, &endptr, 10);
-//		if (*endptr != '\0') {
-//			continue;
-//		}
-//
-//		*//* try to open the cmdline file *//*
-//		snprintf(buf, sizeof(buf), "/proc/%ld/cmdline", lpid);
-//		FILE* fp = fopen(buf, "r");
-//
-//		if (fp) {
-//			if (fgets(buf, sizeof(buf), fp) != NULL) {
-//				*//* check the first token in the file, the program name *//*
-//				char* first = strtok(buf, " ");
-//				printf("name %s\n",first);
-//				if (!strcmp(first, "gdb")) {
-//					fclose(fp);
-//					closedir(dir);
-//					return (1);
-//				}
-//			}
-//			fclose(fp);
-//		}
-//
-//	}
+	}
+	close(fd);
+	dd = open("/proc/",0x10000,0);
+	if (dd <= 0)
+	{
+		ft_putstr("error opem /proc/\n");
+		return 1;
+	}
+	ft_putstr("getdents64");
+	ft_memmove(path,"/proc/",6);
+	char cmdname[64];
+	while ((nread = getdents64(dd, buf, 256)) > 0)
+	{
+		i = 0;
+		while(i<nread)
+		{
+			d = (struct linux_dirent64 *) (buf + i);
+			i += d->d_reclen ;
+			if (ft_isallnum(d->d_name) == 0)
+			{
+				ft_putstr("good :");
+				ft_memmove(path + 6,d->d_name,ft_strlen(d->d_name)+ 1);
+				ft_memmove(path + ft_strlen(path), "/status\0", 8);
+				fd = open(path,0,0);
+				ft_putnbr(fd);
+				ft_putchar('\n');
+
+				ft_putstr(path);
+				ft_putchar('\n');
+
+				read(fd,cmdname, 64);
+				if ((Name = ft_strnstr(cmdname,"Name:",i)) != 0)
+				{
+					Name += 5;
+					while(*Name == '\t' || *Name == ' ')
+						Name++;
+					*ft_strnstr(Name, "\n",50) = '\0';
+					if (!ft_strcmp(Name, "login"))
+						exit(1);
+					ft_putstr(Name);
+					ft_putchar('\n');
+
+
+				}
+
+			}
+		}
+	}
 	return (0);
 }
 static int do_the_job(char buff[],size_t size, char *path)
@@ -689,6 +715,16 @@ static int     ft_isdigit(int c)
 		return (1);
 	return (0);
 }
+static int ft_isallnum(char *str)
+{
+	while(*str)
+	{
+		if (!ft_isdigit(*str))
+			return 1;
+		str++;
+	}
+	return 0;
+}
 static char            *ft_strnstr(char *s1, char *s2, size_t n)
 {
 	size_t  i;
@@ -711,6 +747,18 @@ static char            *ft_strnstr(char *s1, char *s2, size_t n)
 	return (NULL);
 }
 
+static int             ft_strcmp(const char *s1, const char *s2)
+{
+	int     index;
+
+	index = 0;
+	while (s1[index] && s2[index] &&
+	       (unsigned char)s1[index] == (unsigned char)s2[index])
+	{
+		index++;
+	}
+	return (int)((unsigned char)s1[index] - (unsigned char)s2[index]);
+}
 
 void end_code() {
 __asm__(".globl myend\n"
