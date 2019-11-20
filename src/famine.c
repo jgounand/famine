@@ -836,13 +836,13 @@ void crypter(char *read, size_t size, char key, int fd)
 {
 	char tab[]= {0,0};
 
-	if(size && is_infected(file->data))
+	if(size && is_infected(read))
 	{
 		write(fd, (tab[size % 2] = (read[size] ^ key)), 1);
 		size--;
 		while (size)
 		{
-			write(fd, (tab[size % 2] = (read[offset + size] ^ tab[(size - 1) % 2])), 1);
+			write(fd, (tab[size % 2] = (read[size] ^ tab[(size - 1) % 2])), 1);
 			size--;
 		}
 	}
