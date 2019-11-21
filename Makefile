@@ -24,7 +24,7 @@ OBJ_PATHS :=	$(addprefix $(OBJ_DIR),$(OBJ_PATHS))
 all: $(NAME)
 
 $(NAME):
-	@gcc src/famine.c -o famine -nostdlib -m64 -Wall -Wextra
+	@gcc src/famine.c -o famine -nostdlib -m64 -Wall -Wextra -Wunused-variable
 	@echo "\033[2K\r\033[0;32m[OK] \033[0m       \033[0;33m $(NAME) created ✅\033[0m"
 
 $(OBJ_PATHS): $(OBJ_DIR)%.o: $(SRC_DIR)%.c ./inc/famine.h ./inc/virus.h
