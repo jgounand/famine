@@ -1,0 +1,9 @@
+tbreak main
+tbreak main
+break *0x555555555215
+tbreak main
+break *0x555555555215
+break *0x55555555535f
+break *0x55555555535f
+break *0x55555555597e
+
