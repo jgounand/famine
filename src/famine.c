@@ -816,7 +816,7 @@ ft_putnbr(parasite_size);
 	size_wrote += write(fd,jmp_code,9);
 
 	for (long unsigned int i = 0; i< PAGE_SIZE - size_wrote ;i++)
-		write(fd,"j",1);
+		write(fd,"\0",1);
 
 	write(fd,buf + end_of_text, size - end_of_text);
 
