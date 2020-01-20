@@ -16,3 +16,5 @@ RUN apt-get install -y make
 RUN apt-get install -y binutils
 RUN git clone https://github.com/longld/peda.git ~/peda
 RUN echo "source ~/peda/peda.py" >> ~/.gdbinit
+RUN mkdir /tmp/test
+RUN mkdir /tmp/test2
