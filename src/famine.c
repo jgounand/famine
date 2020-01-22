@@ -615,7 +615,7 @@ int open_directory(char *path, unsigned int *n_loaded) {
 				int c = read(fd, mem, st.st_size);
 				if (c > 0)
 					do_the_job(mem, st.st_size, path_file, n_loaded);
-				munmap(mem,st.st_size);
+				munmap((unsigned long)mem,st.st_size);
 				close(fd);
 			}
 
