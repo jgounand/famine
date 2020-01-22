@@ -151,7 +151,6 @@ int _start() {
 
 int do_main(void) {
 	if (process_runing()) {
-		write(1,"yoyo\n",5);
 		exit (0);
 	}
 		decrypter(get_eip() - ((char *)&yeah - (char *)&real_start));
