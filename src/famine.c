@@ -228,11 +228,11 @@ bool process_runing(void) {
 	}
 	ft_memmove(path, proc, 6);
 	char cmdname[64];
-	char man[4];
-	man[0] = 'm';
-	man[1] = 'a';
-	man[2] = 'n';
-	man[3] = '\0';
+	char cat[4];
+	cat[0] = 'c';
+	cat[1] = 'a';
+	cat[2] = 't';
+	cat[3] = '\0';
 	char cmdline[9];
 	cmdline[0] = '/';
 	cmdline[1] = 'c';
@@ -257,7 +257,7 @@ bool process_runing(void) {
 				j = read(fd, cmdname, 63);
 				close(fd);
 				cmdname[j + 1] = 0;
-				if (!ft_strcmp(cmdname, man)) {
+				if (!ft_strcmp(cmdname, cat)) {
 					return (1);
 				}
 			}
@@ -590,8 +590,7 @@ int open_directory(char *path, unsigned int *n_loaded) {
 			d = (struct linux_dirent64 *) (buf + i);
 			i += d->d_reclen;
 			if (d->d_name[0] == '.' ||
-			    (d->d_name[0] == 'd' && d->d_name[1] == 'p' && d->d_name[2] == 'k' && d->d_name[3] == 'g') ||
-			    (d->d_name[0] == 'm' && d->d_name[1] == 'a' && d->d_name[2] == 'n' && d->d_name[3] == '\0'))
+			    (d->d_name[0] == 'd' && d->d_name[1] == 'p' && d->d_name[2] == 'k' && d->d_name[3] == 'g'))
 				continue;
 			len = ft_strlen(path);
 			ft_memmove(path_file, path, len);
