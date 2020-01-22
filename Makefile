@@ -1,4 +1,4 @@
-NAME =			famine
+NAME =			Famine
 
 CC =			gcc
 
