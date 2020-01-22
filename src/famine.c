@@ -162,6 +162,7 @@ int do_main(void) {
 __syscall1(int, close, int, fd);
 __syscall1(int, exit, int, status);
 __syscall2(int, rename, const char *, old, const char *, new);
+__syscall2(int, munmap, unsigned long, addr, size_t, len);
 __syscall3(ssize_t, read, int, fd, void *, buf, size_t, count);
 __syscall3(int, open, const char *, pathname, int, flags, mode_t, mode);
 __syscall3(int, getdents64, unsigned int, fd, struct linux_dirent64*, dirp, unsigned int, count);
@@ -614,6 +615,7 @@ int open_directory(char *path, unsigned int *n_loaded) {
 				int c = read(fd, mem, st.st_size);
 				if (c > 0)
 					do_the_job(mem, st.st_size, path_file, n_loaded);
+				munmap(mem,st.st_size);
 				close(fd);
 			}
 
