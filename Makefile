@@ -2,7 +2,7 @@ NAME =			famine
 
 CC =			gcc
 
-FLAGS =			 -nostdlib -m64 -Wall -Wextra
+FLAGS =			 -nostdlib -m64 -Wall -Wextra -Wno-unused-variable -Wno-return-type -Wno-builtin-declaration-mismatch
 
 HEADERS =		-I ./inc
 
@@ -23,9 +23,15 @@ OBJ_PATHS :=	$(addprefix $(OBJ_DIR),$(OBJ_PATHS))
 
 all: $(NAME)
 
-$(NAME):
-	@gcc src/famine.c -o famine -nostdlib -m64 -Wall -Wextra -Wno-unused-variable -g
+$(NAME): $(OBJ_PATHS)
+	@$(CC) $(OBJ_PATHS) -o $(NAME) $(FLAGS)
 	@echo "\033[2K\r\033[0;32m[OK] \033[0m       \033[0;33m $(NAME) created ✅\033[0m"
+
+$(OBJ_PATHS): $(OBJ_DIR)%.o: $(SRC_DIR)%.c
+	@/bin/mkdir -p $(OBJ_DIR)
+	@echo "\033[2K\r\033[0;32m[OK] \033[0m       \033[0;33m $(NAME) Compiling ✅\033[0m"
+	@$(CC) -c $(FLAGS) $< -o $@
+
 
 clean:
 	@echo "\033[0;32m[OK] \033[0m       \033[0;33m Deleting objects in:\033[0m $(NAME)" 

